@@ -1,14 +1,25 @@
 """Health contract and current service boundaries; run with the service venv."""
 
 import sys
+import runpy
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "apps/local-service"))
 
 from httpx import ASGITransport, AsyncClient
 
 from app.main import app
+
+
+class LauncherTests(unittest.TestCase):
+    def test_default_launcher_is_loopback_only_without_access_logs(self):
+        with patch("uvicorn.run") as run:
+            runpy.run_module("app", run_name="__main__")
+        run.assert_called_once_with(
+            "app.main:app", host="127.0.0.1", port=8765, reload=True, access_log=False
+        )
 
 
 class ServiceTests(unittest.IsolatedAsyncioTestCase):

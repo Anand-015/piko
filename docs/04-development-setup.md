@@ -66,8 +66,10 @@ Build outputs for this configuration:
 | Production archive | `apps/extension/release/crx-piko-extension-0.1.0.zip` |
 
 Vite listens on `127.0.0.1:5173` with a strict port. CRXJS writes its development
-extension to `dist/` and adds development-only localhost access for hot reload.
-Its generated development CSP/permissions differ from the production manifest.
+extension to `dist/`. The manifest explicitly grants localhost HTTP/WebSocket
+access and inline development styles only when Vite runs in serve mode, as
+CRXJS's worker imports modules from Vite. CRXJS also exposes development assets
+for hot reload. The generated development CSP/permissions differ from production.
 `npm run build` restores a self-contained production extension with only the
 `sidePanel` permission and no host permissions. Do not distribute a dev build.
 
@@ -87,6 +89,12 @@ Its generated development CSP/permissions differ from the production manifest.
 Keep Vite running for development HMR. Manifest or background changes may require
 reloading the extension in `chrome://extensions`. If port 5173 is occupied, stop
 the conflicting server before restarting; the fixed port keeps CRXJS consistent.
+The Vite WebSocket client port is also fixed at 5173 because extension pages do
+not have an HTTP port from which the client can infer that connection.
+
+CRXJS 2.4 currently uses Vite's deprecated `server.hmr` configuration and Vite 8
+prints a warning recommending `server.ws`. This upstream warning does not block
+startup or production builds; no installed dependency files are patched.
 
 ## Python setup and launch
 
@@ -157,6 +165,17 @@ lsof -nP -iTCP:8765 -sTCP:LISTEN
 The local address must be `127.0.0.1:8765`, never `0.0.0.0:8765`, `*:8765`,
 or a LAN address. On Windows the LocalAddress column must be `127.0.0.1`.
 
+If another application owns port 8765, leave it running and use an alternate
+loopback port for development. From `apps/local-service`:
+
+```bash
+.venv/bin/python -m uvicorn app.main:app --host 127.0.0.1 --port 8766 --no-access-log
+```
+
+Then run `python3 scripts/verify-service.py --port 8766` from the root and inspect
+the listener on port 8766. `python -m app` continues to use the required default
+port 8765; it intentionally fails if that port is occupied.
+
 ## Automated checks
 
 From the root after installation:
@@ -214,3 +233,21 @@ git commit -m "chore: scaffold local-first application"
 
 No Step 4 UI flow, runtime integration, model downloads, profiles, or form
 features are part of this baseline.
+
+## Implementation verification — 2026-10-29
+
+- Production extension build, TypeScript check, and ESLint passed.
+- Preserved contract suite and three extension boundary/worker checks passed.
+- Four Python tests and `pip check` passed.
+- Chromium loaded the production extension and confirmed stored toolbar panel
+  behavior. The panel rendered at 280, 360, and 480 pixels without browser errors
+  or HTTP requests; a screenshot was visually inspected.
+- A development extension also loaded through CRXJS/Vite on port 5173 without
+  browser errors after the development CSP and WebSocket configuration fixes.
+- The live health API returned the exact required JSON on `127.0.0.1:8766`;
+  `ss` confirmed a loopback-only listener. Port 8765 was already occupied by a
+  separate voice-demo process, which was preserved. The launcher test verifies
+  that `python -m app` still requests `127.0.0.1:8765` by default.
+- Native Chrome toolbar clicking remains a manual acceptance check. The
+  automated browser check verifies configuration and panel rendering only.
+- CRXJS's Vite HMR deprecation warning remains an upstream limitation.
