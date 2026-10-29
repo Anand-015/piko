@@ -1,4 +1,4 @@
-# React + Vite + CRXJS
+# Piko Chrome extension
 
 This template helps you quickly start developing Chrome extensions with React, TypeScript and Vite. It includes the CRXJS Vite plugin for seamless Chrome extension development.
 
@@ -34,8 +34,9 @@ npm run build
 
 ## Project Structure
 
-- `src/popup/` - Extension popup UI
-- `src/content/` - Content scripts
+- `src/sidepanel/` - Placeholder side-panel UI and bundled styles
+- `src/background.ts` - Toolbar-to-side-panel behavior, with sanitized errors
+- `src/components/ui/` - shadcn/ui button, card, badge, separator
 - `manifest.config.ts` - Chrome extension manifest configuration
 
 ## Documentation
@@ -48,5 +49,9 @@ npm run build
 
 - Use `manifest.config.ts` to configure your extension
 - The CRXJS plugin automatically handles manifest generation
-- Content scripts should be placed in `src/content/`
-- Popup UI should be placed in `src/popup/`
+- Step 3 has no popup, content scripts, website access, or local-service bridge.
+- Only the `sidePanel` permission is requested in production.
+- Run `npm run typecheck` and `npm run lint` before building.
+- Production ZIP output: `release/crx-piko-extension-0.1.0.zip`.
+- See [the root setup guide](../../docs/04-development-setup.md) for full setup
+  and manual toolbar verification.

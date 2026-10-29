@@ -123,6 +123,9 @@
     }
   body {
     @apply bg-background text-foreground;
+    margin: 0;
+    min-width: 280px;
+    background: #f5f7f4;
     }
   html {
     @apply font-sans;

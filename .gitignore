@@ -68,3 +68,5 @@ voices/
 .vscode/
 .idea/
 Thumbs.db
+test-results/
+playwright-report/
