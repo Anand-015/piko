@@ -40,7 +40,7 @@ npm run build
 - `src/components/layout/` - Header, shell, and workflow progress
 - `src/components/assistant/` - Runtime status, conversation, and disabled microphone
 - `src/components/review/` - Editable proposals and simulated approval summary
-- `src/background.ts` - Toolbar-to-side-panel behavior, with sanitized errors
+- `src/background/service-worker.ts` - Toolbar behavior, active-tab checks, injection, and lifecycle coordination
 - `src/components/ui/` - shadcn/ui primitives (nine components)
 - `manifest.config.ts` - Chrome extension manifest configuration
 
@@ -54,11 +54,18 @@ npm run build
 
 - Use `manifest.config.ts` to configure your extension
 - The CRXJS plugin automatically handles manifest generation
-- Step 4 uses synthetic data only, with no popup, content scripts, website access,
-  microphone capture, persistence, or local-service bridge.
-- Only the `sidePanel` permission is requested in production.
+- Step 5 adds explicit read-only inspection to the separate synthetic demo.
+  No microphone capture, persistence, service integration, or form filling is added.
+- Production permissions are `sidePanel`, `activeTab`, and `scripting`; no
+  persistent host permissions or automatic content-script registrations.
 - Run `npm run typecheck` and `npm run lint` before building.
 - Production ZIP output: `release/crx-piko-extension-0.1.0.zip`.
 - See [the root setup guide](../../docs/04-development-setup.md) for full setup
   and manual toolbar verification.
 - See [the UI guide](../../docs/05-extension-ui.md) for the demo workflow and tests.
+- See [the scanner guide](../../docs/06-form-scanner.md) for scanner architecture,
+  the metadata-only contract, fixture setup, and test limitations.
+- `src/content/` contains the isolated scanner, registry, labels, visibility, and mutation watcher.
+- `src/features/scanner/` contains messages, validation, lifecycle state, and inventory UI.
+- `scripts/generate-scanner-validator.cjs` generates a CSP-safe validator from the shared contracts
+  before dev, build, and typecheck; the generated JS is ignored and requires no runtime code generation.

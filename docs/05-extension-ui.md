@@ -1,5 +1,9 @@
 # Step 4 — Functional extension UI
 
+This document records the synthetic Step 4 baseline. Step 5 adds a separate
+[read-only scanner](06-form-scanner.md), with user-initiated `activeTab`/`scripting`
+access. The demo workflow below remains disconnected from inspected metadata.
+
 The Chrome side panel now demonstrates preparation, conversation, review, and
 approval with synthetic data. The Python service remains the health-only API
 from Step 3 and is not required to use this interface.

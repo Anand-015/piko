@@ -13,6 +13,7 @@ import { ProposedValuesList } from '@/components/review/ProposedValuesList'
 import { ApprovalSummary } from '@/components/review/ApprovalSummary'
 import { assistantReducer, createInitialState, hasValue, selectedProposals } from '@/features/assistant/assistant.reducer'
 import type { AssistantStage } from '@/features/assistant/assistant.types'
+import { ScannerPanel } from '@/features/scanner/ScannerPanel'
 
 const screenCopy: Record<AssistantStage, { title: string; status: string; description: string }> = {
   idle: { title: 'Local Voice Form Assistant', status: 'Ready to demonstrate the workflow', description: 'Prepare privately. Review your answers. Stay in control.' },
@@ -59,8 +60,7 @@ export default function App() {
           <p className="text-[11px] leading-5 text-muted-foreground">No demo loaded. This action uses a built-in fixture and does not inspect your current page.</p>
         </CardContent>
       </Card>
-      <Button variant="outline" disabled className="min-h-10 w-full" aria-describedby="live-note">Inspect current page · coming later</Button>
-      <p id="live-note" className="text-center text-[11px] text-muted-foreground">Live website access and AI connections are not enabled.</p>
+      <ScannerPanel />
       <details className="text-xs text-muted-foreground"><summary className="cursor-pointer py-2">Demo scenarios</summary><Button variant="ghost" className="mt-1" onClick={() => dispatch({ type: 'SET_ERROR', message: 'This is a simulated preparation error. Reset the demo to try again. No website was accessed.' })}><TriangleAlert aria-hidden="true" />Show demo error</Button></details>
     </>}
 

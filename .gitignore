@@ -70,3 +70,6 @@ voices/
 Thumbs.db
 test-results/
 playwright-report/
+
+# Recreated from shared contracts before extension builds and development
+/apps/extension/src/features/scanner/scan-schema.generated.js

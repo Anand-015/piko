@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://piko.local/schemas/form-scan.schema.json",
+  "title": "ReadOnlyFormScan",
+  "description": "Metadata only. No existing answers, selectors, raw option values, page title, URL path or submission data.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "scanId",
+    "documentId",
+    "origin",
+    "forms",
+    "exclusions",
+    "limitations",
+    "truncated"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "scanId": {
+      "type": "string",
+      "pattern": "^[a-z]+_[a-f0-9]{32}$",
+      "maxLength": 64
+    },
+    "documentId": {
+      "type": "string",
+      "pattern": "^[a-z]+_[a-f0-9]{32}$",
+      "maxLength": 64
+    },
+    "origin": {
+      "type": "string",
+      "maxLength": 255,
+      "pattern": "^https?://[^/?#]+$"
+    },
+    "forms": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "formId",
+          "label",
+          "fields"
+        ],
+        "properties": {
+          "formId": {
+            "type": "string",
+            "pattern": "^[a-z]+_[a-f0-9]{32}$",
+            "maxLength": 64
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "fields": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "form-field.schema.json#/definitions/scannerField"
+            }
+          }
+        }
+      }
+    },
+    "exclusions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hidden",
+        "sensitive",
+        "unsupported",
+        "disabled",
+        "readOnly",
+        "consent",
+        "uncertainLabel"
+      ],
+      "properties": {
+        "hidden": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "sensitive": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "unsupported": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "disabled": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "readOnly": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "consent": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "uncertainLabel": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "uniqueItems": true,
+      "maxItems": 5,
+      "items": {
+        "enum": [
+          "top-frame-only",
+          "light-dom-only",
+          "approximate-visibility",
+          "custom-widgets-skipped",
+          "limits-reached"
+        ]
+      }
+    },
+    "truncated": {
+      "type": "boolean"
+    }
+  }
+}

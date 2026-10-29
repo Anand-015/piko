@@ -11,7 +11,7 @@ let network;
 test.beforeEach(async () => {
   const extensionPath = path.resolve(__dirname, '../apps/extension/dist');
   const manifest = JSON.parse(fs.readFileSync(path.join(extensionPath, 'manifest.json'), 'utf8'));
-  expect(manifest.permissions).toEqual(['sidePanel']);
+  expect(manifest.permissions).toEqual(['sidePanel', 'activeTab', 'scripting']);
   expect(manifest.host_permissions).toBeUndefined();
   expect(manifest.content_scripts).toBeUndefined();
   context = await chromium.launchPersistentContext('', {
@@ -93,7 +93,7 @@ async function loadReview() {
 test('idle, loading, reset and error states remain accessible without connections', async ({}, testInfo) => {
   await expect(panel.getByRole('heading', { name: 'Local Voice Form Assistant', exact: true })).toBeVisible();
   await expect(panel.getByText('Local runtime not connected', { exact: true })).toBeVisible();
-  await expect(panel.getByRole('button', { name: 'Inspect current page · coming later' })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: 'Inspect this page', exact: true })).toBeEnabled();
   await panel.screenshot({ path: testInfo.outputPath('idle.png'), fullPage: true });
   await panel.getByRole('button', { name: 'Load demo form', exact: true }).focus();
   await panel.keyboard.press('Enter');

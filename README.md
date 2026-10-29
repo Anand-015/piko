@@ -1,11 +1,11 @@
 
-# Piko — Step 4 functional extension UI
+# Piko — Step 5 deterministic form scanner
 
-A local-first Chrome extension with a synthetic preparation, conversation,
-review, and simulated-approval workflow, plus an independent Python companion API.
-The extension uses in-memory demo data; the service exposes
-`GET http://127.0.0.1:8765/v1/health`. AI inference, audio, form inspection,
-filling, pairing, and extension-to-service communication are deferred.
+A local-first Chrome extension with an explicitly activated, read-only form
+scanner and a separate synthetic conversation/review demo. The independent
+Python companion service exposes
+`GET http://127.0.0.1:8765/v1/health`. AI inference, audio, filling, pairing,
+and extension-to-service communication are deferred.
 
 ## Repository layout
 
@@ -44,7 +44,12 @@ answer → Review proposed values**. Edit or exclude answers, then choose
 fictional answer or leave it excluded for manual completion. **Reset session**
 clears all messages, proposals, typed drafts, and simulated approvals.
 
-The UI demo runs without the Python service. See the
+For the live read-only scanner, open an HTTP/HTTPS page, click Piko’s toolbar
+icon on that tab, then choose **Inspect this page** in the side panel. It returns
+field metadata without collecting existing answers or modifying the page.
+Try the synthetic local fixture first; see the [scanner guide](docs/06-form-scanner.md).
+
+The scanner and UI demo run without the Python service. See the
 [Step 4 UI guide](docs/05-extension-ui.md) for state transitions and verification.
 
 To run the separate health API, start a second terminal (Linux/macOS):
@@ -111,8 +116,10 @@ troubleshooting. See [the product specification](docs/01-product-spec.md),
 [threat model](docs/02-privacy-threat-model.md), and
 [acceptance tests](docs/03-acceptance-tests.md) for later-phase requirements.
 
-The production extension requests only `sidePanel`, bundles its assets locally,
-and has no content scripts, website permissions, or service requests. The health
+The production extension requests `sidePanel`, `activeTab`, and `scripting`,
+bundles its assets locally, and has no persistent website permissions or service
+requests. Its scanner is injected into the top frame only after inspection is
+requested on an explicitly activated tab. The health
 API has no pairing or CORS bridge and exposes no inference operations. Interactive
 API documentation is disabled to avoid loading public CDN assets.
 
