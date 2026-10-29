@@ -37,5 +37,5 @@ export interface ScanInventory {
   truncated: boolean
 }
 export interface ScanResult { tabId: number; inventory: ScanInventory }
-export type ScanError = 'unsupported-page' | 'activate-extension' | 'unavailable-tab' | 'injection-failed' | 'invalid-result' | 'stale-scan'
+export type ScanError = 'unsupported-page' | 'activate-extension' | 'unavailable-tab' | 'injection-failed' | 'scanner-load-failed' | 'scanner-unavailable' | 'invalid-result' | 'stale-scan'
 export type InvalidationReason = 'changed' | 'navigation' | 'tab-closed' | 'tab-switched'

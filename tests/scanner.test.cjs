@@ -66,15 +66,18 @@ function background(url = 'chrome://settings') {
   const listeners = {};
   let injections = 0;
   const notices = [];
+  const opened = [];
+  const panelBehavior = [];
   const chrome = {
     runtime: { id: 'test-extension', getURL: (suffix) => `chrome-extension://test-extension/${suffix}`, onMessage: { addListener: (fn) => { listeners.message = fn; } }, sendMessage: async (message) => { notices.push(message); } },
-    sidePanel: { setPanelBehavior: async () => {} },
+    sidePanel: { setPanelBehavior: async (behavior) => { panelBehavior.push(behavior); }, open: async (options) => { opened.push(options); } },
+    action: { onClicked: { addListener: (fn) => { listeners.action = fn; } } },
     tabs: { query: async () => [{ id: 7, url }], sendMessage: async () => {}, onUpdated: { addListener: (fn) => { listeners.updated = fn; } }, onRemoved: { addListener: (fn) => { listeners.removed = fn; } }, onActivated: { addListener: (fn) => { listeners.activated = fn; } } },
     scripting: { executeScript: async () => { injections++; throw new Error('PRIVATE_BROWSER_ERROR'); } },
   };
   const worker = createLoader({ chrome }).call(null, path.join(root, 'background/service-worker.ts'));
   const sender = { id: chrome.runtime.id, url: chrome.runtime.getURL('src/sidepanel/index.html') };
-  return { listeners, sender, worker, notices, injections: () => injections };
+  return { listeners, sender, worker, notices, opened, panelBehavior, chrome, injections: () => injections };
 }
 
 test('restricted schemes and Chrome Web Store cannot trigger injection', async () => {
@@ -102,7 +105,8 @@ test('a superseded scan request cannot invalidate the newer successful scan', as
   const scan = inventory();
   const chrome = {
     runtime: { id: 'test-extension', getURL: (suffix) => `chrome-extension://test-extension/${suffix}`, onMessage: { addListener: (fn) => { listener = fn; } }, sendMessage: async (message) => { notices.push(message); } },
-    sidePanel: { setPanelBehavior: async () => {} },
+    sidePanel: { setPanelBehavior: async () => {}, open: async () => {} },
+    action: { onClicked: { addListener() {} } },
     tabs: {
       query: async () => [{ id: 7, url: scan.origin }],
       sendMessage: async (_tab, message) => message.type === 'PIKO_SCAN_DOCUMENT' ? scan : message.type === 'PIKO_SCAN_CURRENT' ? { current: true } : { released: true },
@@ -132,4 +136,27 @@ test('lifecycle events still invalidate panel metadata after a worker restart lo
   assert.deepEqual(bg.notices.at(-1), { type: 'PIKO_SCAN_TAB_ACTIVATED', tabId: 8 });
   bg.listeners.message({ type: 'PIKO_SCAN_STALE', scanId: id('scan', 12), documentId: id('doc', 13) }, { id: bg.sender.id, tab: { id: 7 }, frameId: 0, documentId: 'chrome-document' }, () => {});
   assert.equal(bg.notices.at(-1).scanId, id('scan', 12));
+});
+
+
+test('the toolbar click opens the side panel synchronously with automatic opening disabled', () => {
+  const bg = background();
+  assert.deepEqual(bg.panelBehavior, [{ openPanelOnActionClick: false }]);
+  assert.equal(typeof bg.listeners.action, 'function');
+  bg.listeners.action({ id: 7 });
+  assert.deepEqual(bg.opened, [{ tabId: 7 }]);
+  bg.listeners.action({});
+  assert.equal(bg.opened.length, 1);
+});
+
+test('permission denial, missing scanner asset and disconnected scanner have distinct safe errors', async () => {
+  const bg = background('https://example.test');
+  assert.equal(bg.worker.injectionError(new Error('Cannot access contents of url https://private.example.test/secret')), 'activate-extension');
+  assert.equal(bg.worker.injectionError(new Error('Could not load file src/content/form-scanner.js')), 'scanner-load-failed');
+  assert.equal(bg.worker.injectionError(new Error('PRIVATE_BROWSER_ERROR')), 'injection-failed');
+  bg.chrome.scripting.executeScript = async () => [{ documentId: 'chrome-document' }];
+  bg.chrome.tabs.sendMessage = async () => { throw new Error('Receiving end does not exist'); };
+  const result = await new Promise((resolve) => bg.listeners.message({ type: 'PIKO_SCAN_ACTIVE', requestId: id('request', 14) }, bg.sender, resolve));
+  assert.equal(result.error, 'scanner-unavailable');
+  assert.equal(JSON.stringify(result).includes('Receiving end'), false);
 });
