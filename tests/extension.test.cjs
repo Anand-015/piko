@@ -9,7 +9,7 @@ const buildRoot = path.join(extensionRoot, 'dist');
 test('production extension has only user-initiated scanner permissions and bundled assets', () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(buildRoot, 'manifest.json'), 'utf8'));
   assert.equal(manifest.manifest_version, 3);
-  assert.equal(manifest.version, '0.1.0');
+  assert.equal(manifest.version, require('../apps/extension/package.json').version);
   assert.deepEqual(manifest.permissions, ['sidePanel', 'activeTab', 'scripting']);
   assert.equal(manifest.action.default_popup, undefined);
   for (const key of ['content_scripts', 'host_permissions', 'optional_host_permissions', 'externally_connectable']) {

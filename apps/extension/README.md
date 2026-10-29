@@ -59,7 +59,7 @@ npm run build
 - Production permissions are `sidePanel`, `activeTab`, and `scripting`; no
   persistent host permissions or automatic content-script registrations.
 - Run `npm run typecheck` and `npm run lint` before building.
-- Production ZIP output: `release/crx-piko-extension-0.1.0.zip`.
+- Production ZIP output: `release/crx-piko-extension-0.1.1.zip`.
 - See [the root setup guide](../../docs/04-development-setup.md) for full setup
   and manual toolbar verification.
 - See [the UI guide](../../docs/05-extension-ui.md) for the demo workflow and tests.
