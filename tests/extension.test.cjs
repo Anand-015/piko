@@ -14,7 +14,7 @@ test('production extension exposes only the side panel and bundled assets', () =
   assert.deepEqual(manifest.permissions, ['sidePanel']);
   assert.equal(manifest.action.default_popup, undefined);
   for (const key of ['content_scripts', 'host_permissions', 'optional_host_permissions', 'externally_connectable']) {
-    assert.equal(manifest[key], undefined, `${key} is outside Step 3`);
+    assert.equal(manifest[key], undefined, `${key} is outside the disconnected UI phase`);
   }
   assert.ok(manifest.background.service_worker);
   assert.equal(manifest.background.type, 'module');
