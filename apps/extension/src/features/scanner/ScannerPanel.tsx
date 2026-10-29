@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useScanner } from './use-scanner'
 import type { ScanField } from './scanner.types'
+import { FillPreview } from '../filling/FillPreview'
 
 const reasonLabels = { disabled: 'Disabled', 'read-only': 'Read only', consent: 'Consent · manual only', 'uncertain-label': 'Uncertain label · manual review', limit: 'Options truncated · manual review', 'no-enabled-options': 'No enabled options · manual only' }
 function FieldInventory({ field }: { field: ScanField }) {
@@ -35,7 +36,8 @@ export function ScannerPanel() {
       {Object.values(inventory.exclusions).some(Boolean) && <div className="space-y-1 rounded-lg bg-muted p-3 text-xs"><h3 className="font-medium">Exclusions and manual-only fields</h3>{Object.entries(inventory.exclusions).filter(([, count]) => count > 0).map(([reason, count]) => <p key={reason}>{reason}: {count}</p>)}<p className="pt-1 leading-5 text-muted-foreground">Sensitive and hidden controls are counted without labels or values. Exclusion counts may overlap.</p></div>}
       {inventory.truncated && <p role="alert" className="text-xs text-amber-900">The metadata limit was reached. This is a partial inventory.</p>}
       <div className={state.stage === 'stale' ? 'opacity-60' : ''}>{inventory.forms.map((form) => <section aria-label={form.label} key={form.formId} className="mt-4"><h3 className="border-b pb-2 text-xs font-semibold">{form.label}</h3><ul className="divide-y">{form.fields.map((field) => <FieldInventory key={field.fieldId} field={field} />)}</ul></section>)}</div>
-      <p className="text-[11px] leading-5 text-muted-foreground">Top frame and standard light-DOM controls only. Visibility is approximate. Custom widgets, shadow DOM, and iframe contents are not scanned. No values are approved or filled.</p>
+      <p className="text-[11px] leading-5 text-muted-foreground">Top frame and standard light-DOM controls only. Visibility is approximate. Custom widgets, shadow DOM, and iframe contents are not scanned. Inspection makes no changes.</p>
+      {state.result && <FillPreview key={inventory.scanId} scan={state.result} active={state.stage === 'ready'} />}
     </>}
     {state.stage !== 'idle' && <Button variant="ghost" className="min-h-9 w-full" onClick={clear}>Clear scan</Button>}
   </section>

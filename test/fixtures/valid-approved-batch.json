@@ -1,31 +1,29 @@
 {
-  "batchId": "batch_99e8d7c6b5a4",
-  "sessionId": "sess_1029384756",
   "tabId": 42,
+  "scanId": "scan_00000000000000000000000000000001",
+  "documentId": "doc_00000000000000000000000000000002",
   "origin": "https://portal.example.com",
-  "formInstanceId": "form_inst_a1b2c3d4",
-  "approvedTimestamp": "2026-10-29T16:30:00Z",
-  "expiresAt": "2026-10-29T16:31:00Z",
-  "approvedFields": [
+  "batchId": "batch_00000000000000000000000000000003",
+  "issuedAt": 1793291400000,
+  "expiresAt": 1793291410000,
+  "items": [
     {
-      "fieldId": "f_name",
-      "approvedValue": "Jane Doe",
-      "userModified": false,
-      "expectedDomPathHash": "hash_e1289a0b"
+      "fieldId": "fld_00000000000000000000000000000004",
+      "formId": "frm_00000000000000000000000000000005",
+      "target": {
+        "kind": "text",
+        "value": "Jane Doe"
+      },
+      "overwriteExisting": false
     },
     {
-      "fieldId": "f_email",
-      "approvedValue": "jane.doe@example.org",
-      "userModified": false,
-      "expectedDomPathHash": "hash_f89012cd"
-    },
-    {
-      "fieldId": "f_pref",
-      "approvedValue": "email",
-      "userModified": false,
-      "expectedDomPathHash": "hash_a45678ef"
+      "fieldId": "fld_00000000000000000000000000000006",
+      "formId": "frm_00000000000000000000000000000005",
+      "target": {
+        "kind": "select",
+        "optionId": "opt_00000000000000000000000000000007"
+      },
+      "overwriteExisting": false
     }
-  ],
-  "status": "pending"
+  ]
 }
-

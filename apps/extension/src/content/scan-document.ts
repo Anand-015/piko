@@ -8,12 +8,12 @@ export const controlSelector = 'input,textarea,select'
 const sensitivePattern = /(?:password|passwd|passcode|\botp\b|one[\s_-]?time|\bmfa\b|\b2fa\b|verification[\s_-]?code|security[\s_-]?code|credit[\s_-]?card|debit[\s_-]?card|card[\s_-]?(?:number|holder|expiry|expiration)|\bcvv\b|\bcvc\b|\biban\b|routing[\s_-]?(?:number|no)|bank[\s_-]?account|\bssn\b|social[\s_-]?security|tax[\s_-]?id|national[\s_-]?(?:id|identity|insurance)|aadhaar|aadhar|passport|driver.?s?[\s_-]?licen[cs]e)/i
 const consentPattern = /(?:\bconsent\b|\bterms\b|\bprivacy\b|\bmarketing\b|\bsubscribe\b|\bnewsletter\b|\bopt[\s_-]?in\b|\bagree\b|\baccept\b)/i
 
-function sensitive(element: Control, label: string): boolean {
+export function sensitive(element: Control, label: string): boolean {
   if (element instanceof HTMLInputElement && element.type === 'password') return true
   const autocomplete = element.getAttribute('autocomplete') ?? ''
   if (/(?:^|\s)(?:cc-[\w-]+|current-password|new-password|one-time-code)(?:\s|$)/i.test(autocomplete)) return true
   const signals = [element.id, element.getAttribute('name'), autocomplete, label, element.getAttribute('placeholder')].join(' ').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2').replace(/[_-]+/g, ' ')
-  return sensitivePattern.test(signals)
+  return sensitivePattern.test(signals) || /captcha/i.test(signals) || Boolean(element.closest('[data-sitekey],.g-recaptcha,.h-captcha'))
 }
 function readConstraints(element: Control): ScanConstraints {
   const constraints: ScanConstraints = { patternPresent: element.hasAttribute('pattern') }
@@ -29,7 +29,7 @@ function readConstraints(element: Control): ScanConstraints {
   }
   return constraints
 }
-function fieldType(element: Control): ScanFieldType | null {
+export function fieldType(element: Control): ScanFieldType | null {
   if (element instanceof HTMLTextAreaElement) return 'textarea'
   if (element instanceof HTMLSelectElement) return element.multiple ? null : 'select'
   return supported.has(element.type) ? element.type as ScanFieldType : null
@@ -108,6 +108,7 @@ export function scanDocument(registry: FieldRegistry): { inventory: ScanInventor
       formMap.set(owner, form)
     }
     form.fields.push(field)
+    if (field.eligible) registry.register(field, form.formId, owner, elements, Array.from<Element>(optionElements).slice(0, 50))
     label.nodes.forEach((node) => labelNodes.add(node))
     if (reasons.includes('limit')) inventory.truncated = true
   }

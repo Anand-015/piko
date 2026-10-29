@@ -113,9 +113,9 @@ const fieldIdRegex = '^[a-zA-Z0-9_-]{1,64}$';
 if (
   formFieldSchema.properties.fieldId.pattern === fieldIdRegex &&
   interpretResSchema.properties.proposedUpdates.items.properties.fieldId.pattern === fieldIdRegex &&
-  approvedBatchSchema.properties.approvedFields.items.properties.fieldId.pattern === fieldIdRegex
+  approvedBatchSchema.properties.items.items.properties.fieldId.pattern === formFieldSchema.definitions.scannerField.properties.fieldId.pattern
 ) {
-  console.log('  ✓ Field ID regex consistency verified across FormField, InterpretResponse, and ApprovedFillBatch.');
+  console.log('  ✓ Legacy interpretation IDs and strict scanner/approval IDs are consistent.');
 } else {
   console.error('❌ Inconsistent fieldId patterns detected across contracts!');
   process.exit(1);

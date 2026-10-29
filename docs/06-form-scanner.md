@@ -1,5 +1,8 @@
 # Step 5 — Deterministic read-only form scanner
 
+This guide describes the read-only scanner. Step 6 adds a separate manual
+review-and-fill flow below its inventory; see [the filling guide](07-permission-gated-filling.md).
+
 The extension now inspects a webpage after explicit user activation and displays
 bounded form metadata. It does not collect existing answers, call AI or the
 Python service, fill fields, submit forms, capture audio, or grant approval.
@@ -159,14 +162,16 @@ scan ID supersedes the previous scope. Relevant mutations invalidate registries
 immediately; a debounced notice (150 ms) marks the UI stale. The observer then
 stops until another explicit scan. It never repeatedly rescans on every mutation.
 Replaced controls receive new IDs. Option IDs refer internally to DOM nodes;
-actual option values remain on the page and are not read by this scanner.
+raw option values never leave the content-script registry. Step 6 retains
+option attribute signatures there to detect changes before filling.
 
 Duplicate injection registers no extra listeners or observers. The service
 worker validates caller URL, extension identity, message shape, sender frame,
 and document scope. Navigation, tab closure, tab switches, and worker restarts
 are handled conservatively. Newer requests supersede older requests without an
 older rejection invalidating the newer result. Stale field IDs grant no rights.
-The scanner exposes no write, fill, or approve messages.
+Scanning messages grant no write permission. Step 6 adds separately validated
+worker-only preflight and commit messages to the content script.
 
 ## Validation and remaining manual checks
 
