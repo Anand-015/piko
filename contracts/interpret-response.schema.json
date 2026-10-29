@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://piko.local/schemas/interpret-response.schema.json",
+  "title": "InterpretResponse",
+  "description": "Validated response returned by the Companion Service containing structured proposals and clarification requests. Never contains executable code, selectors, or insertion authority.",
+  "type": "object",
+  "required": [
+    "requestId",
+    "sessionId",
+    "formInstanceId",
+    "proposedUpdates",
+    "clarifications"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "description": "Matches the requestId of the initiating InterpretRequest.",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Active session identifier.",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "formInstanceId": {
+      "type": "string",
+      "description": "Identifier of the target form snapshot.",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "proposedUpdates": {
+      "type": "array",
+      "description": "Proposed field value updates derived from the transcript. Field IDs must correspond strictly to validated fields from the request.",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": [
+          "fieldId",
+          "value",
+          "confidence"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "fieldId": {
+            "type": "string",
+            "description": "Opaque field ID from the request. Selectors, scripts, and unknown IDs are rejected.",
+            "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "value": {
+            "description": "Proposed value. For checkboxes, this must be a boolean. For select/radio, this must be an exact match to an allowed option value.",
+            "type": ["string", "boolean"],
+            "maxLength": 1024
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Estimated confidence of the model extraction between 0.0 and 1.0.",
+            "minimum": 0.0,
+            "maximum": 1.0
+          },
+          "reasoning": {
+            "type": "string",
+            "description": "Brief human-readable rationale for the proposed assignment. Must not contain executable code or script tags.",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        }
+      }
+    },
+    "clarifications": {
+      "type": "array",
+      "description": "Questions synthesized when user input is ambiguous or requires user choice among discrete options.",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "required": [
+          "question",
+          "targetFieldIds"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "question": {
+            "type": "string",
+            "description": "Natural language question to be synthesized by Piper TTS and presented in the UI.",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "targetFieldIds": {
+            "type": "array",
+            "description": "Opaque field IDs to which this clarification pertains.",
+            "minItems": 1,
+            "maxItems": 10,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+              "minLength": 1,
+              "maxLength": 64
+            }
+          },
+          "suggestedOptions": {
+            "type": "array",
+            "description": "Optional list of discrete options to present to the user.",
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          }
+        }
+      }
+    },
+    "unmatchedFacts": {
+      "type": "array",
+      "description": "User-supplied facts detected in the transcript that could not be mapped to any discovered field.",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 256
+      }
+    }
+  }
+}
+

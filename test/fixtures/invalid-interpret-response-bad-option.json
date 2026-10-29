@@ -1,0 +1,15 @@
+{
+  "requestId": "req_8f9a2b1c",
+  "sessionId": "sess_1029384756",
+  "formInstanceId": "form_inst_a1b2c3d4",
+  "proposedUpdates": [
+    {
+      "fieldId": "f_name",
+      "value": "Jane Doe",
+      "confidence": 1.5,
+      "unauthorizedCommand": "window.location='https://evil.com'"
+    }
+  ],
+  "clarifications": []
+}
+

@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://piko.local/schemas/approved-fill-batch.schema.json",
+  "title": "ApprovedFillBatch",
+  "description": "Authorization grant generated exclusively upon explicit user confirmation in the extension UI. Entitles the Content Script to fill only the specified fields on the target form instance.",
+  "type": "object",
+  "required": [
+    "batchId",
+    "sessionId",
+    "tabId",
+    "origin",
+    "formInstanceId",
+    "approvedTimestamp",
+    "expiresAt",
+    "approvedFields",
+    "status"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "batchId": {
+      "type": "string",
+      "description": "Unique cryptographic identifier generated when user clicks 'Approve & Fill'.",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "sessionId": {
+      "type": "string",
+      "description": "Active session identifier.",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "tabId": {
+      "type": "integer",
+      "description": "Chrome browser tab ID where authorization was granted.",
+      "minimum": 1
+    },
+    "origin": {
+      "type": "string",
+      "description": "Web origin authorized for this batch (e.g., https://portal.example.com). Insertion into any other origin is strictly blocked.",
+      "minLength": 1,
+      "maxLength": 255
+    },
+    "formInstanceId": {
+      "type": "string",
+      "description": "Form snapshot ID for which this batch was authorized. Re-rendering or DOM replacement invalidates this token.",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "approvedTimestamp": {
+      "type": "string",
+      "description": "ISO 8601 UTC timestamp of explicit user approval action.",
+      "format": "date-time"
+    },
+    "expiresAt": {
+      "type": "string",
+      "description": "ISO 8601 UTC timestamp after which this authorization batch is considered expired and non-executable.",
+      "format": "date-time"
+    },
+    "approvedFields": {
+      "type": "array",
+      "description": "Explicit list of field-value pairs verified and confirmed by the user. Only fields in this array will be inserted.",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "required": [
+          "fieldId",
+          "approvedValue",
+          "userModified",
+          "expectedDomPathHash"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "fieldId": {
+            "type": "string",
+            "description": "Opaque field ID to be populated.",
+            "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "approvedValue": {
+            "description": "The exact value approved by the user for insertion. Checkboxes must be booleans; dropdowns must match allowed options.",
+            "type": ["string", "boolean"],
+            "maxLength": 1024
+          },
+          "userModified": {
+            "type": "boolean",
+            "description": "Flag indicating whether the user edited the proposed value in the staging UI before approving."
+          },
+          "expectedDomPathHash": {
+            "type": "string",
+            "description": "Structural hash verified against the live DOM node immediately prior to insertion.",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "description": "Lifecycle status of the approved batch.",
+      "enum": [
+        "pending",
+        "applied",
+        "failed",
+        "expired"
+      ]
+    }
+  }
+}
+

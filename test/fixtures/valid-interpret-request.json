@@ -1,0 +1,69 @@
+{
+  "requestId": "req_8f9a2b1c",
+  "sessionContext": {
+    "sessionId": "sess_1029384756",
+    "formInstanceId": "form_inst_a1b2c3d4",
+    "origin": "https://portal.example.com",
+    "pageTitle": "User Onboarding Questionnaire"
+  },
+  "transcript": "My name is Jane Doe, my email is jane.doe@example.org, and my preferred contact method is email.",
+  "fields": [
+    {
+      "fieldId": "f_name",
+      "fieldType": "text",
+      "label": "Full Name",
+      "name": "fullName",
+      "placeholder": "e.g. Jane Doe",
+      "currentValue": null,
+      "isRequired": true,
+      "isDisabled": false,
+      "isReadOnly": false,
+      "isVisible": true,
+      "constraints": {
+        "minLength": 2,
+        "maxLength": 100
+      },
+      "domPathHash": "hash_e1289a0b"
+    },
+    {
+      "fieldId": "f_email",
+      "fieldType": "email",
+      "label": "Email Address",
+      "name": "emailAddress",
+      "placeholder": "jane@example.com",
+      "currentValue": null,
+      "isRequired": true,
+      "isDisabled": false,
+      "isReadOnly": false,
+      "isVisible": true,
+      "constraints": {
+        "pattern": "^[^@]+@[^@]+\\.[^@]+$"
+      },
+      "domPathHash": "hash_f89012cd"
+    },
+    {
+      "fieldId": "f_pref",
+      "fieldType": "select",
+      "label": "Preferred Contact Method",
+      "name": "contactPreference",
+      "currentValue": null,
+      "isRequired": false,
+      "isDisabled": false,
+      "isReadOnly": false,
+      "isVisible": true,
+      "options": [
+        { "value": "email", "label": "Email" },
+        { "value": "phone", "label": "Phone" },
+        { "value": "sms", "label": "SMS" }
+      ],
+      "domPathHash": "hash_a45678ef"
+    }
+  ],
+  "knownFacts": [
+    {
+      "factKey": "userLanguage",
+      "factValue": "English"
+    }
+  ]
+}
+

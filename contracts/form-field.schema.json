@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://piko.local/schemas/form-field.schema.json",
+  "title": "FormField",
+  "description": "Represents an eligible, visible form field discovered and extracted from the DOM by the Piko Content Script.",
+  "type": "object",
+  "required": [
+    "fieldId",
+    "fieldType",
+    "label",
+    "isRequired",
+    "isDisabled",
+    "isReadOnly",
+    "isVisible"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "fieldId": {
+      "type": "string",
+      "description": "Opaque application-generated identifier for the field. Never contains DOM selectors or raw element paths.",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "fieldType": {
+      "type": "string",
+      "description": "Normalized category of the form input.",
+      "enum": [
+        "text",
+        "email",
+        "tel",
+        "number",
+        "select",
+        "radio",
+        "checkbox",
+        "textarea",
+        "date"
+      ]
+    },
+    "label": {
+      "type": "string",
+      "description": "Sanitized human-readable field label derived from associated <label>, aria-label, or placeholder.",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "name": {
+      "type": "string",
+      "description": "Original HTML name attribute of the input element, if present.",
+      "minLength": 0,
+      "maxLength": 128
+    },
+    "placeholder": {
+      "type": "string",
+      "description": "Sanitized placeholder attribute string, if present.",
+      "minLength": 0,
+      "maxLength": 128
+    },
+    "currentValue": {
+      "description": "Current value populated in the DOM element prior to new filling.",
+      "type": ["string", "boolean", "null"],
+      "maxLength": 1024
+    },
+    "isRequired": {
+      "type": "boolean",
+      "description": "Indicates whether the field carries the required attribute or aria-required='true'."
+    },
+    "isDisabled": {
+      "type": "boolean",
+      "description": "Indicates whether the field is currently disabled in the DOM."
+    },
+    "isReadOnly": {
+      "type": "boolean",
+      "description": "Indicates whether the field is marked read-only."
+    },
+    "isVisible": {
+      "type": "boolean",
+      "description": "Indicates whether the field is visible (not hidden, non-zero bounding rect)."
+    },
+    "autocomplete": {
+      "type": "string",
+      "description": "HTML autocomplete attribute value, if specified and permitted.",
+      "minLength": 0,
+      "maxLength": 64
+    },
+    "options": {
+      "type": "array",
+      "description": "Allowed discrete options for select and radio fields. Empty for arbitrary text fields.",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "required": ["value", "label"],
+        "additionalProperties": false,
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Machine value submitted with the form.",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable label displayed in the option list.",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "description": "HTML5 validation constraints declared on the DOM element.",
+      "additionalProperties": false,
+      "properties": {
+        "minLength": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "step": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        }
+      }
+    },
+    "domPathHash": {
+      "type": "string",
+      "description": "Cryptographic or structural hash of element's hierarchy used to detect DOM mutations without storing selectors.",
+      "minLength": 1,
+      "maxLength": 64
+    }
+  }
+}
+

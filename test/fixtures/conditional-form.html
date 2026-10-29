@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Piko Test Form: Dynamic Conditional Disclosure</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: bold; margin-bottom: 4px; }
+    input[type="text"], select { width: 100%; padding: 8px; box-sizing: border-box; }
+    .conditional-panel { display: none; background: #e8f5e9; border: 1px solid #4caf50; padding: 12px; margin-top: 12px; border-radius: 4px; }
+    .visible { display: block; }
+  </style>
+</head>
+<body>
+  <h2>Piko Test Fixture: Conditional & Dynamic Fields</h2>
+  <p>Used to verify that newly revealed fields require a fresh review and approval cycle (Step 9).</p>
+
+  <form id="conditional-form" onsubmit="event.preventDefault(); alert('Manual Submission Received!');">
+    <div class="form-group">
+      <label for="primary_name">Applicant Name *</label>
+      <input type="text" id="primary_name" name="applicantName" required>
+    </div>
+
+    <div class="form-group">
+      <label for="primary_occupation">Current Occupation *</label>
+      <select id="primary_occupation" name="primaryOccupation" onchange="handleOccupationChange(this.value)">
+        <option value="">-- Select Occupation --</option>
+        <option value="software_engineer">Software Engineer</option>
+        <option value="physician">Physician</option>
+        <option value="other">Other (Specify Below)</option>
+      </select>
+    </div>
+
+    <!-- CONDITIONALLY REVEALED ELEMENT -->
+    <div id="other_occupation_group" class="conditional-panel">
+      <label for="other_occupation_text">Please Specify Your Occupation *</label>
+      <input type="text" id="other_occupation_text" name="otherOccupationText" placeholder="e.g. Systems Architect">
+    </div>
+
+    <div class="form-group" style="margin-top: 20px;">
+      <label>
+        <input type="checkbox" id="has_cosigner" onchange="handleCosignerChange(this.checked)">
+        Include Co-Signer on Application
+      </label>
+    </div>
+
+    <!-- CONDITIONALLY REVEALED CO-SIGNER GROUP -->
+    <div id="cosigner_details" class="conditional-panel">
+      <h4>Co-Signer Details</h4>
+      <div class="form-group">
+        <label for="cosigner_name">Co-Signer Full Name</label>
+        <input type="text" id="cosigner_name" name="cosignerName">
+      </div>
+      <div class="form-group">
+        <label for="cosigner_phone">Co-Signer Phone</label>
+        <input type="text" id="cosigner_phone" name="cosignerPhone">
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <button type="submit" id="submit_btn" style="padding: 10px 20px; font-weight: bold;">Submit Form Manually</button>
+    </div>
+  </form>
+
+  <script>
+    function handleOccupationChange(value) {
+      const panel = document.getElementById('other_occupation_group');
+      if (value === 'other') {
+        panel.classList.add('visible');
+      } else {
+        panel.classList.remove('visible');
+      }
+    }
+
+    function handleCosignerChange(isChecked) {
+      const panel = document.getElementById('cosigner_details');
+      if (isChecked) {
+        panel.classList.add('visible');
+      } else {
+        panel.classList.remove('visible');
+      }
+    }
+  </script>
+</body>
+</html>
+

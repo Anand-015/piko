@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://piko.local/schemas/interpret-request.schema.json",
+  "title": "InterpretRequest",
+  "description": "Payload sent from the Chrome Extension to the Companion Service to parse user speech into proposed field updates.",
+  "type": "object",
+  "required": [
+    "requestId",
+    "sessionContext",
+    "transcript",
+    "fields"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "requestId": {
+      "type": "string",
+      "description": "Unique identifier for tracing this interpretation round.",
+      "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+      "minLength": 1,
+      "maxLength": 64
+    },
+    "sessionContext": {
+      "type": "object",
+      "description": "Contextual metadata binding the request to an active tab and form snapshot.",
+      "required": [
+        "sessionId",
+        "formInstanceId",
+        "origin",
+        "pageTitle"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "sessionId": {
+          "type": "string",
+          "description": "Ephemeral session identifier generated when Piko is activated on a page.",
+          "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "formInstanceId": {
+          "type": "string",
+          "description": "Identifier representing the current immutable DOM snapshot of the form.",
+          "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "origin": {
+          "type": "string",
+          "description": "Security origin of the web page where the form resides (e.g., https://example.com).",
+          "minLength": 1,
+          "maxLength": 255
+        },
+        "pageTitle": {
+          "type": "string",
+          "description": "Sanitized document title of the target web page.",
+          "minLength": 0,
+          "maxLength": 256
+        }
+      }
+    },
+    "transcript": {
+      "type": "string",
+      "description": "User spoken answer transcribed by whisper.cpp or typed user text.",
+      "minLength": 1,
+      "maxLength": 2000
+    },
+    "fields": {
+      "type": "array",
+      "description": "Array of eligible visible form fields currently discovered on the webpage.",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": {
+        "$ref": "form-field.schema.json"
+      }
+    },
+    "knownFacts": {
+      "type": "array",
+      "description": "Previously confirmed user facts stored in ephemeral session memory.",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "required": ["factKey", "factValue"],
+        "additionalProperties": false,
+        "properties": {
+          "factKey": {
+            "type": "string",
+            "description": "Semantic identifier for the fact (e.g., 'fullName', 'emailAddress').",
+            "pattern": "^[a-zA-Z0-9_.-]{1,64}$",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "factValue": {
+            "description": "Value confirmed by the user in an earlier step of this session.",
+            "type": ["string", "boolean"],
+            "maxLength": 1024
+          },
+          "sourceFieldId": {
+            "type": "string",
+            "description": "Opaque field ID from which this fact originated, if applicable.",
+            "pattern": "^[a-zA-Z0-9_-]{1,64}$",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        }
+      }
+    }
+  }
+}
+

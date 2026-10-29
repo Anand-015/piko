@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Piko Test Form: Standard Contact Form</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: bold; margin-bottom: 4px; }
+    input[type="text"], input[type="email"], input[type="tel"], select, textarea {
+      width: 100%; padding: 8px; box-sizing: border-box; font-size: 14px;
+    }
+    .radio-group, .checkbox-group { display: flex; gap: 12px; align-items: center; }
+    .excluded-box { background: #ffebee; border: 1px solid #f44336; padding: 12px; margin-top: 24px; border-radius: 4px; }
+    .excluded-box h4 { margin: 0 0 8px 0; color: #c62828; }
+  </style>
+</head>
+<body>
+  <h2>Piko Test Fixture: Standard Contact & Preference Form</h2>
+  <p>Used to verify multi-field mapping, dropdowns, radios, checkboxes, and exclusion of sensitive inputs.</p>
+
+  <form id="contact-form" autocomplete="off" onsubmit="event.preventDefault(); alert('Manual Submission Received!');">
+    <div class="form-group">
+      <label for="full_name">Full Name *</label>
+      <input type="text" id="full_name" name="fullName" required placeholder="e.g. Jane Doe">
+    </div>
+
+    <div class="form-group">
+      <label for="email_addr">Email Address *</label>
+      <input type="email" id="email_addr" name="emailAddress" required placeholder="jane@example.com">
+    </div>
+
+    <div class="form-group">
+      <label for="phone_num">Phone Number</label>
+      <input type="tel" id="phone_num" name="phoneNumber" placeholder="555-0199">
+    </div>
+
+    <div class="form-group">
+      <label for="contact_pref">Preferred Contact Method</label>
+      <select id="contact_pref" name="contactPreference">
+        <option value="">-- Please Select --</option>
+        <option value="email">Email</option>
+        <option value="phone">Phone</option>
+        <option value="sms">SMS</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Communication Frequency</label>
+      <div class="radio-group">
+        <label><input type="radio" name="commFrequency" value="daily"> Daily</label>
+        <label><input type="radio" name="commFrequency" value="weekly"> Weekly</label>
+        <label><input type="radio" name="commFrequency" value="never"> Never</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="checkbox-group">
+        <input type="checkbox" id="newsletter_opt_in" name="newsletterOptIn">
+        <label for="newsletter_opt_in">Subscribe to product updates</label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="notes_area">Additional Comments</label>
+      <textarea id="notes_area" name="notes" rows="3" placeholder="Any specific requirements..."></textarea>
+    </div>
+
+    <!-- SENSITIVE EXCLUSION CONTROLS (Must be ignored by Piko) -->
+    <div class="excluded-box">
+      <h4>Security Exclusion Verification Area</h4>
+      <p style="font-size: 12px; margin: 0 0 8px 0;">Piko must ignore these inputs completely.</p>
+      
+      <div class="form-group">
+        <label for="account_pass">Account Password</label>
+        <input type="password" id="account_pass" name="accountPassword" placeholder="Must remain untouched">
+      </div>
+
+      <div class="form-group">
+        <label for="otp_entry">One-Time Code (2FA)</label>
+        <input type="text" id="otp_entry" autocomplete="one-time-code" placeholder="6-digit code">
+      </div>
+
+      <div class="form-group">
+        <label for="file_attachment">Attach Identification Document</label>
+        <input type="file" id="file_attachment">
+      </div>
+    </div>
+
+    <div style="margin-top: 24px;">
+      <button type="submit" id="submit_btn" style="padding: 10px 20px; font-weight: bold;">Submit Form Manually</button>
+    </div>
+  </form>
+</body>
+</html>
+
