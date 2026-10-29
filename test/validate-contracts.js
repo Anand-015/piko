@@ -10,8 +10,10 @@
 const fs = require('fs');
 const path = require('path');
 const Ajv = require('ajv');
+const addFormats = require('ajv-formats');
 
 const ajv = new Ajv({ allErrors: true, strict: false });
+addFormats(ajv);
 
 // Helper to read and parse JSON
 function loadJson(relPath) {

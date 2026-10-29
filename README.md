@@ -1,5 +1,118 @@
 
-# PIKO Implementation Plan
+# Piko — Step 3 runnable skeleton
+
+A local-first Chrome extension shell and an independent Python companion API.
+The extension opens a placeholder side panel; the service exposes
+`GET http://127.0.0.1:8765/v1/health`. AI inference, audio, form inspection,
+filling, pairing, and extension-to-service communication are deferred.
+
+## Repository layout
+
+```text
+apps/extension/       React + TypeScript + CRXJS/Vite + shadcn/ui, Manifest V3
+apps/local-service/   FastAPI + Pydantic + Uvicorn; separate Python environment
+contracts/           Preserved Step 2 JSON Schemas; shared contract source
+docs/                Product specification, threat model, acceptance tests, setup
+test/                Preserved Step 2 contract harness and synthetic fixtures
+tests/               Step 3 extension and service checks
+scripts/             Live service verification utility
+```
+
+## Quick start
+
+Use Node.js 22.12+ (or 20.19+) and Python 3.10+. Commands below assume the
+repository root unless a `cd` is shown. Python 3.14 was used during setup.
+
+```bash
+npm ci
+npm --prefix apps/extension ci
+npm run build
+npm run dev:extension
+```
+
+In Chrome 116+, open `chrome://extensions`, enable **Developer mode**, select
+**Load unpacked**, and choose `apps/extension/dist` inside this repository.
+The generated manifest is `apps/extension/dist/manifest.json`. Keep Vite running
+for development, pin the extension, and click its toolbar icon to open the side
+panel. A production build uses the same directory and needs no Vite server.
+Rebuild before switching between development and production.
+
+Start the Python service in a separate terminal (Linux/macOS):
+
+```bash
+cd apps/local-service
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-dev.txt
+.venv/bin/python -m app
+```
+
+Windows PowerShell:
+
+```powershell
+cd apps/local-service
+py -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m app
+```
+
+No environment activation is needed. `python -m app` binds to **127.0.0.1:8765**
+with reload enabled and access logging disabled. Install `requirements.txt`
+instead if service tests are not needed. The explicit dependencies avoid the
+telemetry and cloud CLI packages pulled in by current `fastapi[standard]`.
+
+From the repository root, verify the running API:
+
+```bash
+python3 scripts/verify-service.py
+```
+
+On Windows, use `py scripts/verify-service.py`. The expected response is:
+
+```json
+{
+  "status": "ok",
+  "service": "local-voice-form-assistant",
+  "version": "0.1.0",
+  "inference": "not_integrated"
+}
+```
+
+## Verification
+
+```bash
+npm run build
+npm run typecheck
+npm run lint
+npm test
+apps/local-service/.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+For Windows, replace the final Python executable with
+`.\apps\local-service\.venv\Scripts\python.exe`. Optional Chromium smoke test:
+
+```bash
+npx playwright install chromium
+npm run test:browser
+```
+
+See [the setup and verification guide](docs/04-development-setup.md) for listener
+checks, exact build outputs, browser verification, dependency boundaries, and
+troubleshooting. See [the product specification](docs/01-product-spec.md),
+[threat model](docs/02-privacy-threat-model.md), and
+[acceptance tests](docs/03-acceptance-tests.md) for later-phase requirements.
+
+The production extension requests only `sidePanel`, bundles its assets locally,
+and has no content scripts, website permissions, or service requests. The health
+API has no pairing or CORS bridge and exposes no inference operations. Interactive
+API documentation is disabled to avoid loading public CDN assets.
+
+The original plan below and the frozen Step 2 documents describe the future MVP.
+Their `/health` and `/api/v1/*` routes and model-install instructions do not
+describe this Step 3 implementation. `/v1/health` is the implemented endpoint.
+
+---
+
+# Original PIKO Implementation Plan (preserved)
 
 ## 1. Goal and Design Decision
 

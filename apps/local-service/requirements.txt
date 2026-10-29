@@ -1,0 +1,4 @@
+# Explicit runtime dependencies avoid cloud CLI / telemetry extras.
+fastapi==0.135.4
+pydantic==2.14.2
+uvicorn==0.54.0
