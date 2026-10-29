@@ -1,36 +1,141 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# PIKO Implementation Plan
 
-First, run the development server:
+## 1. Goal and Design Decision
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Build a local voice assistant that identifies web-form fields, reuses approved information, asks for missing answers, and automatically fills the form within user-granted permissions.
+
+Compare these two approaches:
+
+| Aspect | Sequential voice workflow | Privacy-first preview workflow |
+|---|---|---|
+| Interaction | Ask, transcribe, fill, confirm each field | Prepare answers privately, then approve filling |
+| Strength | Clear conversational guidance | Prevents disclosure before approval |
+| Limitation | Repetitive questions; confirmation happens after disclosure | Repeated field selection can undermine automation |
+| Recommended combination | Ask only for missing or uncertain details; approve a batch before inserting it | |
+
+**Chosen behavior:** prepare privately → approve destination and fields → fill automatically → ask only when new permission or clarification is needed.
+
+Approval occurs before insertion. Submission remains manual.
+
+## 2. Architecture and Interfaces
+
+Use a Chrome extension connected to a local companion service.
+
+| Component | Technology | Responsibility |
+|---|---|---|
+| Extension | Manifest V3, TypeScript, React, Vite | Side panel, microphone recording, permissions, review |
+| Form adapter | Content script, MutationObserver | Extract fields, insert approved values, observe changes |
+| Local service | Python, FastAPI, Pydantic | Coordinate speech, model inference, validation |
+| Speech recognition | whisper.cpp | Transcribe recordings locally |
+| Language model | Ollama, local Qwen2.5 3B | Interpret answers and propose field mappings |
+| Speech synthesis | Piper | Speak questions and progress messages |
+| Temporary profile | Extension memory | Reuse explicitly selected details during the active session |
+
+Use English for the initial demo. Additional languages require separate transcription, model, and voice testing.
+
+Do not persist profiles in the prototype. Closing the session clears its reusable information.
+
+**Service interface:**
+
+- `GET /health`: report model and speech-engine readiness.
+- `POST /transcribe`: accept a short recording and return text.
+- `POST /interpret`: accept allowed field definitions and the current answer; return proposed updates and clarification questions.
+- `POST /synthesize`: accept a question and return speech audio.
+
+Requests require a per-installation pairing token. Keep the service bound to loopback and allow only the paired extension origin.
+
+**Field identity:**
+
+The extension assigns opaque IDs to supported fields and maintains their DOM references. AI returns IDs, never executable JavaScript or generated selectors.
+
+```json
+{
+  "updates": [
+    {
+      "fieldId": "field_17",
+      "value": "Ayham"
+    }
+  ],
+  "clarifications": []
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Reject unknown IDs, unsupported values, and stale form references. Structured output controls shape; application code must still validate meaning.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 3. Execution and Privacy Rules
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Activate:** the user starts Piko on the current page.
+2. **Inspect:** extract visible, enabled fields, associated labels, options, instructions, and constraints. Exclude hidden inputs and unrelated page content.
+3. **Plan:** match approved session details to fields; identify missing answers. Generate a short form summary.
+4. **Converse:** Piper asks about missing information. Record with push-to-talk and transcribe locally. Stop recording during speech playback.
+5. **Interpret:** allow one answer to populate several proposed values. Ask targeted questions for ambiguity; never invent information.
+6. **Preview:** show the destination origin, proposed values, and their source. Users can edit or deselect values.
+7. **Approve and fill:** create an in-memory permission containing the origin, tab, form instance, and exact field-value pairs. Fill that batch without further prompts.
+8. **Verify:** use appropriate input/change events and check accepted values and browser validation. Report failures rather than claiming completion.
+9. **Observe:** newly revealed fields start unapproved. Collect missing answers and approve them together in another batch.
+10. **Finish:** show remaining issues and provide a final review. The user submits through the website.
 
-## Learn More
+Additional boundaries:
 
-To learn more about Next.js, take a look at the following resources:
+- A spoken confirmation after filling does not replace approval before filling.
+- Changed values require new approval; existing permission cannot authorize different personal data.
+- Expire permission after navigation, origin change, form replacement, or session end.
+- Exclude passwords, OTPs, payment credentials, and detected identity-number fields. Unsupported or uncertain sensitive fields remain manual.
+- Do not support cross-origin frames, CAPTCHA solving, file uploads, or automatic navigation in this version.
+- Treat webpage instructions as untrusted data. They cannot override permissions or authorize tool calls.
+- Keep audio temporary. Exclude recordings, transcripts, and field values from logs and analytics.
+- Disable cloud inference and cloud fallbacks. Bundle application assets locally.
+- Explain that approved websites may read inserted values before submission; clearing values cannot reverse disclosure.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 4. Fourteen-Hour Build Sequence
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Assume one developer and an existing computer; the schedule is a prototype target, not a production-release estimate.
 
-## Deploy on Vercel
+| Time | Deliverable |
+|---|---|
+| Hours 0–1 | Install models; benchmark transcription, extraction, and Piper playback on the demo computer |
+| Hours 1–4 | Extension panel, field registry, inspection, permission preview, deterministic filling |
+| Hours 4–6 | Local service, recording conversion, Whisper transcription, Piper playback |
+| Hours 6–8 | Structured answer extraction, validation, multi-field answers, clarification |
+| Hours 8–10 | Session profile reuse and permission enforcement |
+| Hours 10–12 | Conditional fields, validation feedback, corrections, failure handling |
+| Hours 12–14 | End-to-end checks, user trials, demo recording, setup documentation |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Start with a multilingual Whisper base model and quantized Qwen2.5 3B. If response times are unacceptable, benchmark Whisper tiny; retain text input as a fallback. Do not silently switch to cloud processing.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The hardware benchmark is a release gate: if the available machine cannot run the local pipeline acceptably, report that limitation rather than promise real-time voice.
+
+Expected incremental AI API and hosting spend: **₹0**, assuming existing hardware and local execution. Electricity, downloads, packaging, support, and any hardware purchases are additional costs.
+
+Before distributing binaries, review the selected runtime, model, Piper, and voice licenses.
+
+## 5. Validation and Release Criteria
+
+Use synthetic personal information and two controlled test forms with different labels and layouts. Include text, email, select, radio, checkbox, repeated labels, and one conditional section.
+
+**Required checks:**
+
+- One spoken answer proposes values for multiple correct fields.
+- Ambiguous answers produce clarification.
+- No personal values enter the webpage before approval.
+- Deselecting a field prevents insertion.
+- Permission cannot transfer to another origin, tab, or replaced form.
+- Hidden, excluded, and unknown fields remain untouched.
+- Conditional fields trigger another private preparation-and-approval cycle.
+- Invalid values are surfaced and can be corrected.
+- Unauthenticated local requests are rejected.
+- Voice inference works with external networking blocked after setup.
+- Model failure preserves the draft and permits manual completion.
+
+**Initial targets, to be measured rather than advertised as achieved:**
+
+- At least 95% correct field-value proposals over 40 defined test cases.
+- Zero unapproved insertions in the permission test suite.
+- Median end-of-recording to displayed proposal below five seconds on the documented demo hardware.
+- At least four of five trial users finish both supported forms without developer assistance.
+
+Compare completion time, corrections, and prompts against manual completion with browser autofill enabled. Record first-use and repeat-use results separately.
+
+Publish an installable prototype only after documenting its hardware requirements, supported form types, privacy boundaries, measured results, and known failures. Broad website support and accessibility benefits remain claims to validate.
+
