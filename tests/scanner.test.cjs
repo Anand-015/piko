@@ -160,3 +160,46 @@ test('permission denial, missing scanner asset and disconnected scanner have dis
   assert.equal(result.error, 'scanner-unavailable');
   assert.equal(JSON.stringify(result).includes('Receiving end'), false);
 });
+
+function allowScanner(bg, scan = inventory()) {
+  bg.chrome.scripting.executeScript = async () => [{ documentId: 'chrome-document' }];
+  bg.chrome.tabs.sendMessage = async (_tabId, message) => message.type === 'PIKO_SCAN_DOCUMENT' ? scan : message.type === 'PIKO_SCAN_CURRENT' ? { current: true } : { released: true };
+}
+
+test('withheld tab URLs do not falsely reject a browser-authorized scan', async () => {
+  const bg = background();
+  bg.chrome.tabs.query = async () => [{ id: 7 }];
+  allowScanner(bg);
+  const result = await new Promise((resolve) => bg.listeners.message({ type: 'PIKO_SCAN_ACTIVE', requestId: id('request', 15) }, bg.sender, resolve));
+  assert.equal(result.ok, true);
+  assert.equal(result.result.inventory.origin, 'https://example.test');
+});
+
+test('inspection and freshness checks use the panel window instead of a different focused window', async () => {
+  const bg = background();
+  const queries = [];
+  bg.chrome.tabs.query = async (query) => {
+    queries.push(query);
+    return query.windowId === 31 ? [{ id: 7 }] : [{ id: 99, url: 'chrome://settings' }];
+  };
+  allowScanner(bg);
+  const result = await new Promise((resolve) => bg.listeners.message({ type: 'PIKO_SCAN_ACTIVE', requestId: id('request', 16), windowId: 31 }, bg.sender, resolve));
+  assert.equal(result.ok, true);
+  assert.equal(queries.length, 2);
+  assert.ok(queries.every((query) => query.windowId === 31 && query.currentWindow === undefined));
+  assert.equal(messages.isInspectRequest({ type: 'PIKO_SCAN_ACTIVE', requestId: id('request', 17), windowId: -1 }), false);
+  assert.equal(messages.isInspectRequest({ type: 'PIKO_SCAN_ACTIVE', requestId: id('request', 17), windowId: '31' }), false);
+});
+
+test('missing URL metadata never bypasses Chrome permission checks or the scanner protocol guard', async () => {
+  const bg = background();
+  bg.chrome.tabs.query = async () => [{ id: 7 }];
+  bg.chrome.scripting.executeScript = async () => { throw new Error('Cannot access contents of this page'); };
+  const request = { type: 'PIKO_SCAN_ACTIVE', requestId: id('request', 18) };
+  const denied = await new Promise((resolve) => bg.listeners.message(request, bg.sender, resolve));
+  assert.equal(denied.error, 'activate-extension');
+  bg.chrome.scripting.executeScript = async () => [{ documentId: 'chrome-document' }];
+  bg.chrome.tabs.sendMessage = async () => ({ error: 'unsupported-page' });
+  const restricted = await new Promise((resolve) => bg.listeners.message(request, bg.sender, resolve));
+  assert.equal(restricted.error, 'unsupported-page');
+});

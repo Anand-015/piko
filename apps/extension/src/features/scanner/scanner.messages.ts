@@ -10,7 +10,7 @@ export function hasKeys(value: Record<string, unknown>, keys: string[]): boolean
 export function isOpaqueId(value: unknown): value is string { return typeof value === 'string' && opaqueIdPattern.test(value) }
 export function makeId(prefix: string): string { return `${prefix}_${crypto.randomUUID().replace(/-/g, '')}` }
 
-export interface InspectRequest { type: 'PIKO_SCAN_ACTIVE'; requestId: string }
+export interface InspectRequest { type: 'PIKO_SCAN_ACTIVE'; requestId: string; windowId?: number }
 export interface StopRequest { type: 'PIKO_STOP_SCAN'; tabId: number; scanId: string }
 export interface DocumentRequest { type: 'PIKO_SCAN_DOCUMENT'; requestId: string }
 export interface CurrentRequest { type: 'PIKO_SCAN_CURRENT'; scanId: string; documentId: string }
@@ -20,7 +20,7 @@ export interface Activated { type: 'PIKO_SCAN_TAB_ACTIVATED'; tabId: number }
 export type InspectResponse = { ok: true; requestId: string; result: ScanResult } | { ok: false; requestId: string; error: ScanError }
 
 export function isInspectRequest(value: unknown): value is InspectRequest {
-  return isRecord(value) && hasKeys(value, ['type', 'requestId']) && value.type === 'PIKO_SCAN_ACTIVE' && isOpaqueId(value.requestId)
+  return isRecord(value) && (hasKeys(value, ['type', 'requestId']) || (hasKeys(value, ['type', 'requestId', 'windowId']) && Number.isSafeInteger(value.windowId) && Number(value.windowId) >= 0)) && value.type === 'PIKO_SCAN_ACTIVE' && isOpaqueId(value.requestId)
 }
 export function isStopRequest(value: unknown): value is StopRequest {
   return isRecord(value) && hasKeys(value, ['type', 'tabId', 'scanId']) && value.type === 'PIKO_STOP_SCAN' && Number.isSafeInteger(value.tabId) && Number(value.tabId) >= 0 && isOpaqueId(value.scanId)

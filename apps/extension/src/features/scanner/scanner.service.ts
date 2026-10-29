@@ -14,7 +14,12 @@ export const scanErrors: Record<ScanError, string> = {
   'stale-scan': 'The page or active tab changed during inspection. Activate Piko on the intended page and scan again.',
 }
 export async function inspectActivePage(): Promise<ScanResult> {
-  const request: InspectRequest = { type: 'PIKO_SCAN_ACTIVE', requestId: makeId('request') }
+  // The panel's owning window is stable even when another Chrome/DevTools
+  // window has focus. Worker-side currentWindow does not provide that binding.
+  let windowId: number | undefined
+  try { windowId = (await chrome.windows.getCurrent()).id } catch { throw new Error(scanErrors['unavailable-tab']) }
+  if (windowId === undefined) throw new Error(scanErrors['unavailable-tab'])
+  const request: InspectRequest = { type: 'PIKO_SCAN_ACTIVE', requestId: makeId('request'), windowId }
   let response: unknown
   try { response = await chrome.runtime.sendMessage(request) } catch { throw new Error(scanErrors['injection-failed']) }
   if (!isRecord(response) || response.requestId !== request.requestId) throw new Error(scanErrors['invalid-result'])

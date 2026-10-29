@@ -44,7 +44,7 @@ async function launch(fixtureAccess) {
   }
   context = await chromium.launchPersistentContext('', {
     channel: 'chromium', headless: true, executablePath: process.env.PIKO_CHROMIUM_PATH || undefined,
-    args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
+    args: ['--enable-unsafe-extension-debugging', `--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
   });
   externalRequests = []; panelErrors = [];
   context.on('request', (request) => { if (/^https?:/.test(request.url()) && !request.url().startsWith(baseURL)) externalRequests.push(request.url()); });
@@ -230,4 +230,40 @@ test('option limits and sensitive identifier heuristics fail closed and option m
   const choice = fields(disabledOptions).find((field) => field.label === 'Department');
   expect(choice.enabled).toBe(true); expect(choice.eligible).toBe(false); expect(choice.exclusionReasons).toContain('no-enabled-options');
   expect(await forbiddenCalls()).toEqual([]);
+});
+
+
+test('the real production action grants activeTab and scans without test host permissions', async () => {
+  await launch(false);
+  const browserSession = await context.browser().newBrowserCDPSession();
+  const { targetInfos } = await browserSession.send('Target.getTargets', { filter: [{}] });
+  const tabTarget = targetInfos.find((target) => target.type === 'tab' && target.url === page.url());
+  expect(tabTarget, JSON.stringify(targetInfos.map(({ type, url }) => ({ type, url })))).toBeTruthy();
+  await browserSession.send('Extensions.triggerAction', { id: extensionId, targetId: tabTarget.targetId });
+  const result = await requestScan();
+  expect(result.ok, JSON.stringify(result)).toBe(true);
+  expect(fields(result).find((field) => field.label === 'Full name')).toBeTruthy();
+});
+
+test('the panel scans its own window when URL metadata is withheld and another window is focused', async () => {
+  await launch(false);
+  const browserSession = await context.browser().newBrowserCDPSession();
+  const { targetInfos } = await browserSession.send('Target.getTargets', { filter: [{}] });
+  const tabTarget = targetInfos.find((target) => target.type === 'tab' && target.url === page.url());
+  await browserSession.send('Extensions.triggerAction', { id: extensionId, targetId: tabTarget.targetId });
+  const otherWindow = await worker.evaluate(async (url) => chrome.windows.create({ url, focused: true }), `${baseURL}/empty-fixture.html`);
+  await worker.evaluate(() => {
+    const query = chrome.tabs.query.bind(chrome.tabs);
+    chrome.tabs.query = async (options) => (await query(options)).map((tab) => {
+      const metadata = { ...tab }; delete metadata.url; delete metadata.pendingUrl; return metadata;
+    });
+  });
+  // Do not refocus the fixture window: the panel must explicitly send its owner.
+  await panel.getByRole('button', { name: 'Inspect this page', exact: true }).evaluate((button) => button.click());
+  const scanner = panel.getByRole('region', { name: 'Read-only form scanner' });
+  await expect(scanner).toContainText('17 supported fields');
+  await expect(scanner).toContainText('Registration form');
+  await expect(panel.getByText('Page could not be inspected', { exact: true })).toHaveCount(0);
+  await expect(panel.getByText(/Piko v0\.1\.1/)).toBeVisible();
+  await worker.evaluate(async (id) => chrome.windows.remove(id), otherWindow.id);
 });
