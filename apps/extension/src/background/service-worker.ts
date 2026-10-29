@@ -56,11 +56,15 @@ async function inspect(request: InspectRequest): Promise<InspectResponse> {
   let priorSession: Session | undefined
   let createdSession: Session | undefined
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    const query = request.windowId === undefined ? { active: true, currentWindow: true } : { active: true, windowId: request.windowId }
+    const [tab] = await chrome.tabs.query(query)
     if (tab?.id === undefined) fail('unavailable-tab')
     tabId = tab.id
     const url = supportedUrl(tab.url)
-    if (!url) fail(tab.url ? 'unsupported-page' : 'activate-extension')
+    // url is optional metadata, not evidence that scripting is denied. Chrome's
+    // executeScript permission check below is authoritative. The scanner also
+    // checks its own protocol before reading any field metadata.
+    if (tab.url && !url) fail('unsupported-page')
     priorSession = sessions.get(tabId)
     // A fresh scan replaces the scope ID, while unchanged DOM nodes may retain
     // their opaque field IDs. Actual staleness and explicit release clear them.
@@ -79,13 +83,14 @@ async function inspect(request: InspectRequest): Promise<InspectResponse> {
       inventory = await chrome.tabs.sendMessage(tabId, { type: 'PIKO_SCAN_DOCUMENT', requestId: request.requestId }, { documentId: chromeDocumentId })
     } catch { fail('scanner-unavailable') }
     if (pending.get(tabId) !== token) fail('stale-scan')
-    if (!isScanInventory(inventory) || inventory.origin !== url.origin) fail('invalid-result')
+    if (isRecord(inventory) && inventory.error === 'unsupported-page') fail('unsupported-page')
+    if (!isScanInventory(inventory) || (url && inventory.origin !== url.origin)) fail('invalid-result')
     const current = inventory as ScanInventory
     const session = { scanId: current.scanId, documentId: current.documentId, chromeDocumentId, inventory: current }
     createdSession = session
     sessions.set(tabId, session)
     const freshness: unknown = await chrome.tabs.sendMessage(tabId, { type: 'PIKO_SCAN_CURRENT', scanId: current.scanId, documentId: current.documentId }, { documentId: chromeDocumentId })
-    const [active] = await chrome.tabs.query({ active: true, currentWindow: true })
+    const [active] = await chrome.tabs.query(query)
     if (!isRecord(freshness) || freshness.current !== true || active?.id !== tabId || pending.get(tabId) !== token || sessions.get(tabId) !== session) fail('stale-scan')
     pending.delete(tabId)
     return { ok: true, requestId: request.requestId, result: { tabId, inventory: current } }

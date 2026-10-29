@@ -36,6 +36,7 @@ if (!scope[marker]) {
       return
     }
     if (isDocumentRequest(message)) {
+      if (!['http:', 'https:'].includes(location.protocol)) { respond({ error: 'unsupported-page' }); return }
       watcher?.current()
       watcher?.dispose()
       const { inventory, labelNodes } = scanDocument(registry)

@@ -45,7 +45,10 @@ Windows PowerShell can use `py` instead of `python3`.
 8. **Clear scan** removes panel metadata and releases the observer/registry.
    Starting the synthetic demo also unmounts and clears the scanner panel.
 
-The independent health API on ports 8765/8766 is not needed for scanning. For
+The extension patch version is **0.1.1**, visible in `chrome://extensions` and
+the panel footer. After reloading, confirm this version to avoid testing an older
+installed copy. The independent health API remains at version 0.1.0 and does not
+need to be running for scanning. For
 extension hot reload use `npm run dev:extension`; the existing loopback-only Vite
 setup remains intact. Production works without Vite.
 
@@ -57,6 +60,13 @@ registered content scripts. Browser-internal pages, extension pages, file/data
 URLs, and the Chrome Web Store are unsupported. Unavailable URLs or revoked
 access produce instructions to activate the toolbar action on a normal HTTP(S)
 page. Raw Chrome errors and page metadata are not logged.
+
+The panel includes its own browser window ID in inspection requests. The worker
+queries and rechecks the active tab in that window, rather than relying on the
+worker's most recently focused window. A missing `tabs.Tab.url` is treated as
+withheld metadata, not automatic denial: Chrome's actual script-injection
+permission check is authoritative, and the scanner checks its document protocol
+before reading fields. No `tabs` or additional host permission is required.
 
 Piko opens the panel from an explicit `chrome.action.onClicked` handler. Automatic
 `openPanelOnActionClick` is disabled because that shortcut can consume the action
@@ -187,12 +197,19 @@ opaque IDs, duplicate injection, empty/error/stale states, conditional sections,
 replacement, label/option mutations, navigation, tab switches, metadata limits,
 and layouts at 280/360/480 pixels. Screenshots are visually reviewed.
 
-Headless Chromium cannot click its native toolbar action. The production build
-is tested without a grant to verify denial; injection tests use an isolated copy
-of the build with **only loopback host access** added for the fixture. The real
-manifest remains free of host permissions. The native toolbar-grant-and-panel
-sequence must still be tested manually in Chrome using the instructions above.
-No real personal-data websites are needed for initial testing.
+Production-permission tests now use Chrome's `Extensions.triggerAction` testing
+API to run the real extension action on a synthetic tab and verify `activeTab`
+access without adding host permissions. A second regression withholds tab URL
+metadata and focuses a different browser window; inspection must still return
+the fixture inventory from the panel's own window. The testing switch enabling
+that API is used only in the isolated test browser profile.
+
+The suite also verifies denial before activation. Detailed DOM/privacy fixture
+tests retain an isolated build copy with **only loopback host access** so their
+instrumentation can be installed before scanner activation. The real manifest
+remains free of host permissions. Chrome/Brave's actual toolbar placement and
+user interaction remain useful manual checks; no real personal-data websites
+are needed for initial testing.
 
 Stop at Step 5: form filling, AI mapping, voice, service authentication, profiles,
 and real approval permissions remain unimplemented.
