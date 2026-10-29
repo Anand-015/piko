@@ -55,6 +55,17 @@ URLs, and the Chrome Web Store are unsupported. Unavailable URLs or revoked
 access produce instructions to activate the toolbar action on a normal HTTP(S)
 page. Raw Chrome errors and page metadata are not logged.
 
+Piko opens the panel from an explicit `chrome.action.onClicked` handler. Automatic
+`openPanelOnActionClick` is disabled because that shortcut can consume the action
+without granting `activeTab` in Chromium browsers. The handler calls
+`chrome.sidePanel.open()` synchronously within the click gesture and performs no
+inspection until the separate Inspect action is chosen. No permissions are added.
+
+After updating or reloading the extension, refresh the fixture webpage once and
+open Piko again using its toolbar icon. Permission denials, missing scanner files,
+and disconnected content-script receivers now have distinct recovery messages;
+internal errors are never reported as a definite permission denial.
+
 `background/service-worker.ts` checks the active tab, imports the scanner via
 CRXJS's `?script&iife`, and calls `chrome.scripting.executeScript` in the isolated
 world, targeting only frame 0. The production build currently emits

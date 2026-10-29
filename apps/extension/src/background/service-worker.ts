@@ -4,7 +4,14 @@ import { isScanInventory } from '../features/scanner/scanner.validation'
 import type { InspectRequest, InspectResponse } from '../features/scanner/scanner.messages'
 import type { InvalidationReason, ScanError, ScanInventory } from '../features/scanner/scanner.types'
 
-void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => console.error('PIKO_SIDE_PANEL_CONFIGURATION_FAILED'))
+// The automatic side-panel path can consume the action without granting
+// activeTab. An explicit action handler preserves the permission-grant gesture.
+void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => console.error('PIKO_SIDE_PANEL_CONFIGURATION_FAILED'))
+chrome.action.onClicked.addListener((tab) => {
+  if (tab.id === undefined) return
+  // Call synchronously within the user gesture, before any awaited work.
+  void chrome.sidePanel.open({ tabId: tab.id }).catch(() => console.error('PIKO_SIDE_PANEL_OPEN_FAILED'))
+})
 interface Session { scanId: string; documentId: string; chromeDocumentId: string }
 const sessions = new Map<number, Session>()
 const pending = new Map<number, string>()
@@ -30,6 +37,12 @@ function invalidate(tabId: number, reason: InvalidationReason, releaseReferences
   void chrome.runtime.sendMessage({ type: 'PIKO_SCAN_INVALIDATED', tabId, scanId: session.scanId, reason }).catch(() => {})
 }
 function fail(error: ScanError): never { throw error }
+export function injectionError(cause: unknown): ScanError {
+  const message = cause instanceof Error ? cause.message : ''
+  if (/cannot access|missing host permission|permission.*(?:host|page)/i.test(message)) return 'activate-extension'
+  if (/(?:could not|cannot|failed to) load (?:file|script)|no such file/i.test(message)) return 'scanner-load-failed'
+  return 'injection-failed'
+}
 export function supportedUrl(raw: string | undefined): URL | null {
   try {
     const url = new URL(raw ?? '')
@@ -59,10 +72,13 @@ async function inspect(request: InspectRequest): Promise<InspectResponse> {
     try {
       const injection = await chrome.scripting.executeScript({ target: { tabId, frameIds: [0] }, world: 'ISOLATED', files: [scannerFile] })
       chromeDocumentId = injection[0]?.documentId
-    } catch { fail('injection-failed') }
+    } catch (cause) { fail(injectionError(cause)) }
     if (!chromeDocumentId) fail('injection-failed')
     if (pending.get(tabId) !== token) fail('stale-scan')
-    const inventory: unknown = await chrome.tabs.sendMessage(tabId, { type: 'PIKO_SCAN_DOCUMENT', requestId: request.requestId }, { documentId: chromeDocumentId })
+    let inventory: unknown
+    try {
+      inventory = await chrome.tabs.sendMessage(tabId, { type: 'PIKO_SCAN_DOCUMENT', requestId: request.requestId }, { documentId: chromeDocumentId })
+    } catch { fail('scanner-unavailable') }
     if (pending.get(tabId) !== token) fail('stale-scan')
     if (!isScanInventory(inventory) || inventory.origin !== url.origin) fail('invalid-result')
     const current = inventory as ScanInventory
@@ -75,7 +91,7 @@ async function inspect(request: InspectRequest): Promise<InspectResponse> {
     pending.delete(tabId)
     return { ok: true, requestId: request.requestId, result: { tabId, inventory: current } }
   } catch (cause) {
-    const allowed: ScanError[] = ['unsupported-page', 'activate-extension', 'unavailable-tab', 'injection-failed', 'invalid-result', 'stale-scan']
+    const allowed: ScanError[] = ['unsupported-page', 'activate-extension', 'unavailable-tab', 'injection-failed', 'scanner-load-failed', 'scanner-unavailable', 'invalid-result', 'stale-scan']
     const error: ScanError = allowed.includes(cause as ScanError) ? cause as ScanError : 'injection-failed'
     if (tabId !== undefined) {
       if (pending.get(tabId) === token || (createdSession && sessions.get(tabId) === createdSession)) invalidate(tabId, 'changed')

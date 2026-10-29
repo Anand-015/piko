@@ -28,7 +28,7 @@ test.beforeEach(async () => {
   await context.route(/^https?:/, (route) => route.abort());
   const worker = context.serviceWorkers()[0] || await context.waitForEvent('serviceworker');
   await expect.poll(() => worker.evaluate(() => chrome.sidePanel.getPanelBehavior()))
-    .toEqual({ openPanelOnActionClick: true });
+    .toEqual({ openPanelOnActionClick: false });
 
   // A separate target-page fixture must stay untouched throughout the UI flow.
   target = await context.newPage();

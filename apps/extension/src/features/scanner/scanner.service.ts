@@ -7,7 +7,9 @@ export const scanErrors: Record<ScanError, string> = {
   'unsupported-page': 'This page cannot be inspected. Open a normal HTTP or HTTPS page; browser pages, extension pages, and the Chrome Web Store are restricted.',
   'activate-extension': 'This tab is unavailable or has no temporary access. Browser and extension pages cannot be inspected. On a normal HTTP/HTTPS page, click Piko’s toolbar icon to grant access, then inspect again.',
   'unavailable-tab': 'No active webpage is available. Open a page and try again.',
-  'injection-failed': 'Chrome could not grant access to this page. Click Piko’s toolbar icon on the target tab and try again. Some protected pages cannot be inspected.',
+  'injection-failed': 'The scanner could not start on this page. Reload Piko in chrome://extensions, refresh the webpage, then open Piko from its toolbar icon. Protected pages cannot be inspected.',
+  'scanner-load-failed': 'The scanner file could not be loaded. Rebuild the extension with npm run build and reload Piko in chrome://extensions.',
+  'scanner-unavailable': 'The page scanner is no longer connected. Refresh the webpage, then open Piko from its toolbar icon and inspect again.',
   'invalid-result': 'The scan did not match the metadata contract. No inventory was accepted.',
   'stale-scan': 'The page or active tab changed during inspection. Activate Piko on the intended page and scan again.',
 }
