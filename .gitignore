@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,31 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Nested JavaScript apps and generated extension packages
+node_modules/
+dist/
+.output/
+release/
+
+# Python environments and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Local model assets and temporary audio
+models/
+voices/
+*.gguf
+*.ggml
+*.safetensors
+*.wav
+*.mp3
+*.flac
+
+# Editor and operating-system files
+.vscode/
+.idea/
+Thumbs.db

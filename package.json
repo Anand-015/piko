@@ -1,0 +1,19 @@
+{
+  "name": "piko",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local-first voice form assistant development utilities",
+  "scripts": {
+    "dev:extension": "npm --prefix apps/extension run dev",
+    "build": "npm --prefix apps/extension run build",
+    "typecheck": "npm --prefix apps/extension run typecheck",
+    "lint": "npm --prefix apps/extension run lint",
+    "test:contracts": "node test/validate-contracts.js",
+    "test:skeleton": "node --test tests/extension.test.cjs",
+    "test": "npm run test:contracts && npm run test:skeleton"
+  },
+  "devDependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}
