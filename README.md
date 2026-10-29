@@ -1,10 +1,11 @@
 
-# Piko — Step 3 runnable skeleton
+# Piko — Step 5 deterministic form scanner
 
-A local-first Chrome extension shell and an independent Python companion API.
-The extension opens a placeholder side panel; the service exposes
-`GET http://127.0.0.1:8765/v1/health`. AI inference, audio, form inspection,
-filling, pairing, and extension-to-service communication are deferred.
+A local-first Chrome extension with an explicitly activated, read-only form
+scanner and a separate synthetic conversation/review demo. The independent
+Python companion service exposes
+`GET http://127.0.0.1:8765/v1/health`. AI inference, audio, filling, pairing,
+and extension-to-service communication are deferred.
 
 ## Repository layout
 
@@ -14,7 +15,7 @@ apps/local-service/   FastAPI + Pydantic + Uvicorn; separate Python environment
 contracts/           Preserved Step 2 JSON Schemas; shared contract source
 docs/                Product specification, threat model, acceptance tests, setup
 test/                Preserved Step 2 contract harness and synthetic fixtures
-tests/               Step 3 extension and service checks
+tests/               Contract, reducer, extension-browser, and service checks
 scripts/             Live service verification utility
 ```
 
@@ -37,7 +38,21 @@ for development, pin the extension, and click its toolbar icon to open the side
 panel. A production build uses the same directory and needs no Vite server.
 Rebuild before switching between development and production.
 
-Start the Python service in a separate terminal (Linux/macOS):
+In the side panel, choose **Load demo form → Start conversation → Use sample
+answer → Review proposed values**. Edit or exclude answers, then choose
+**Simulate approval**. The required organization starts missing; provide a
+fictional answer or leave it excluded for manual completion. **Reset session**
+clears all messages, proposals, typed drafts, and simulated approvals.
+
+For the live read-only scanner, open an HTTP/HTTPS page, click Piko’s toolbar
+icon on that tab, then choose **Inspect this page** in the side panel. It returns
+field metadata without collecting existing answers or modifying the page.
+Try the synthetic local fixture first; see the [scanner guide](docs/06-form-scanner.md).
+
+The scanner and UI demo run without the Python service. See the
+[Step 4 UI guide](docs/05-extension-ui.md) for state transitions and verification.
+
+To run the separate health API, start a second terminal (Linux/macOS):
 
 ```bash
 cd apps/local-service
@@ -101,14 +116,16 @@ troubleshooting. See [the product specification](docs/01-product-spec.md),
 [threat model](docs/02-privacy-threat-model.md), and
 [acceptance tests](docs/03-acceptance-tests.md) for later-phase requirements.
 
-The production extension requests only `sidePanel`, bundles its assets locally,
-and has no content scripts, website permissions, or service requests. The health
+The production extension requests `sidePanel`, `activeTab`, and `scripting`,
+bundles its assets locally, and has no persistent website permissions or service
+requests. Its scanner is injected into the top frame only after inspection is
+requested on an explicitly activated tab. The health
 API has no pairing or CORS bridge and exposes no inference operations. Interactive
 API documentation is disabled to avoid loading public CDN assets.
 
 The original plan below and the frozen Step 2 documents describe the future MVP.
 Their `/health` and `/api/v1/*` routes and model-install instructions do not
-describe this Step 3 implementation. `/v1/health` is the implemented endpoint.
+describe the current implementation. `/v1/health` remains the implemented endpoint.
 
 ---
 

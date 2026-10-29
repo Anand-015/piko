@@ -145,6 +145,153 @@
       "minLength": 1,
       "maxLength": 64
     }
+  },
+  "definitions": {
+    "scannerField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fieldId",
+        "label",
+        "labelSource",
+        "labelUncertain",
+        "fieldType",
+        "required",
+        "visible",
+        "enabled",
+        "readOnly",
+        "eligible",
+        "exclusionReasons",
+        "options",
+        "constraints"
+      ],
+      "properties": {
+        "fieldId": {
+          "type": "string",
+          "pattern": "^[a-z]+_[a-f0-9]{32}$",
+          "maxLength": 64
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "labelSource": {
+          "enum": [
+            "label",
+            "aria-labelledby",
+            "aria-label",
+            "legend",
+            "placeholder",
+            "fallback"
+          ]
+        },
+        "labelUncertain": {
+          "type": "boolean"
+        },
+        "fieldType": {
+          "enum": [
+            "text",
+            "email",
+            "tel",
+            "number",
+            "date",
+            "textarea",
+            "select",
+            "radio",
+            "checkbox"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "readOnly": {
+          "type": "boolean"
+        },
+        "eligible": {
+          "type": "boolean"
+        },
+        "exclusionReasons": {
+          "type": "array",
+          "maxItems": 6,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "disabled",
+              "read-only",
+              "consent",
+              "uncertain-label",
+              "limit",
+              "no-enabled-options"
+            ]
+          }
+        },
+        "options": {
+          "type": "array",
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "optionId",
+              "label",
+              "disabled"
+            ],
+            "properties": {
+              "optionId": {
+                "type": "string",
+                "pattern": "^[a-z]+_[a-f0-9]{32}$",
+                "maxLength": 64
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "disabled": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        "constraints": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "minLength": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "maxLength": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            },
+            "min": {
+              "type": "string",
+              "maxLength": 32
+            },
+            "max": {
+              "type": "string",
+              "maxLength": 32
+            },
+            "step": {
+              "type": "string",
+              "maxLength": 32
+            },
+            "patternPresent": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    }
   }
 }
-

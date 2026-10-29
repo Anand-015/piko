@@ -1,0 +1,12 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const Ajv = require('ajv');
+const standalone = require('ajv/dist/standalone').default;
+const contracts = path.resolve(__dirname, '../../../contracts');
+const ajv = new Ajv({ strict: true, allowUnionTypes: true, code: { source: true, esm: true, lines: true } });
+ajv.addSchema(JSON.parse(fs.readFileSync(path.join(contracts, 'form-field.schema.json'), 'utf8')));
+const validate = ajv.compile(JSON.parse(fs.readFileSync(path.join(contracts, 'form-scan.schema.json'), 'utf8')));
+const target = path.resolve(__dirname, '../src/features/scanner/scan-schema.generated.js');
+const generated = standalone(ajv, validate).replace(/require\("ajv\/dist\/runtime\/(ucs2length|equal)"\)\.default/g, (_match, helper) => `(${require(`ajv/dist/runtime/${helper}`).default.toString()})`);
+const source = '// Generated from contracts/*.schema.json. Do not edit. No runtime code generation.\n' + generated;
+if (!fs.existsSync(target) || fs.readFileSync(target, 'utf8') !== source) fs.writeFileSync(target, source);

@@ -1,5 +1,10 @@
 # Step 3 development setup and verification
 
+This document records the Step 3 foundation. The extension now has the
+[Step 4 synthetic UI workflow](05-extension-ui.md); the service, permissions,
+build paths, and installation commands below still apply. References to the
+placeholder panel and Step 4 being deferred describe the earlier baseline.
+
 ## Scope and preserved work
 
 This step creates a toolbar-launched Chrome side panel and a health-only Python

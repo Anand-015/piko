@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Piko scanner — synthetic fixture</title>
+  <style>
+    body { max-width: 760px; margin: 32px auto; padding: 16px; font: 16px/1.5 system-ui; }
+    form { padding: 20px; border: 1px solid #aaa; margin-bottom: 24px; }
+    label { display: block; margin: 10px 0 4px; }
+    input:not([type=radio]):not([type=checkbox]), textarea, select { display: block; min-height: 30px; max-width: 100%; }
+    fieldset { margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Synthetic scanner fixture</h1>
+  <p id="unrelated">Unrelated page text should never be returned.</p>
+  <form aria-label="Registration form" id="registration">
+    <label for="full-name">Full name</label>
+    <input id="full-name" aria-label="Ignored lower priority name" name="fullName" type="text" required minlength="2" maxlength="100" pattern="[A-Za-z ]+" value="PRIVATE_EXISTING_NAME_901">
+    <span id="email-label">Email address</span>
+    <input aria-labelledby="email-label" aria-label="Ignored lower priority email" name="email" type="email" value="PRIVATE_EXISTING_EMAIL_902@example.test">
+    <input type="tel" aria-label="Telephone" value="PRIVATE_EXISTING_PHONE_903">
+    <label>Biography<textarea name="bio">PRIVATE_EXISTING_TEXTAREA_904</textarea></label>
+    <label for="quantity">Quantity</label><input id="quantity" type="number" min="1" max="12" step="0.5" value="7">
+    <label for="date">Start date</label><input id="date" type="date" min="2026-01-01" max="2027-12-31" value="2026-10-29">
+    <label for="department">Department</label>
+    <select id="department" required>
+      <option value="RAW_OPTION_PLACEHOLDER" disabled>Choose a department</option>
+      <option value="RAW_OPTION_ENGINEERING_905" selected>Engineering</option>
+      <option value="RAW_OPTION_DESIGN_906">Design</option>
+      <optgroup label="Unavailable" disabled><option value="RAW_OPTION_ARCHIVE_907">Archive</option></optgroup>
+    </select>
+    <fieldset><legend>Preferred channel</legend>
+      <label><input type="radio" name="channel" value="RAW_RADIO_EMAIL_908" checked required>Email</label>
+      <label><input type="radio" name="channel" value="RAW_RADIO_PHONE_909">Phone</label>
+      <label><input type="radio" name="channel" value="RAW_RADIO_OTHER_910" disabled>Email</label>
+    </fieldset>
+    <label><input type="checkbox" name="hasLaptop" checked>Has a laptop</label>
+    <label><input type="checkbox" name="termsConsent" checked>I agree to the terms and privacy policy</label>
+    <label for="organization">Organization</label><input id="organization" required>
+    <div><span>Ambiguous nearby text</span><input name="referenceCode" value="PRIVATE_UNLABELLED_911"></div>
+    <input type="text" placeholder="Preferred nickname" value="PRIVATE_PLACEHOLDER_912">
+    <input type="hidden" name="hiddenValue" value="PRIVATE_HIDDEN_913">
+    <div hidden><label>Hidden subtree<input value="PRIVATE_HIDDEN_914"></label></div>
+    <div aria-hidden="true"><label>ARIA hidden<input value="PRIVATE_HIDDEN_915"></label></div>
+    <label>Password<input type="password" value="PRIVATE_PASSWORD_916"></label>
+    <label>Verification code<input name="otp" autocomplete="one-time-code" value="PRIVATE_OTP_917"></label>
+    <label>Card number<input autocomplete="cc-number" value="PRIVATE_CARD_918"></label>
+    <label>National ID<input name="national_id" value="PRIVATE_IDENTIFIER_919"></label>
+    <label>Disabled answer<input disabled value="PRIVATE_DISABLED_920"></label>
+    <fieldset disabled><legend>Unavailable section</legend><label>Disabled by fieldset<input value="PRIVATE_DISABLED_921"></label></fieldset>
+    <label>Read-only answer<input readonly value="PRIVATE_READONLY_922"></label>
+    <label>Upload document<input type="file"></label>
+    <label>Favorite color<input type="color"></label>
+    <div role="combobox" aria-label="Custom widget" tabindex="0">Custom widget placeholder</div>
+    <button type="button" id="reveal">Reveal conditional field</button>
+    <div id="conditional" hidden><label for="details">Additional details</label><input id="details" required value="PRIVATE_CONDITIONAL_923"></div>
+    <button type="button" id="replace">Replace full name</button>
+    <button type="submit">Submit fixture</button><button type="reset">Reset fixture</button>
+  </form>
+  <form aria-label="Separate form"><fieldset><legend>Separate radio question</legend>
+    <label><input type="radio" name="channel" value="RAW_SECOND_RADIO_924">Email</label>
+    <label><input type="radio" name="channel" value="RAW_SECOND_RADIO_925">Email</label>
+  </fieldset></form>
+  <script>
+    window.fixtureEvents = { input: 0, change: 0, submit: 0 };
+    for (const name of ['input', 'change']) document.addEventListener(name, () => window.fixtureEvents[name]++);
+    document.addEventListener('submit', (event) => { event.preventDefault(); window.fixtureEvents.submit++; });
+    document.getElementById('reveal').addEventListener('click', () => { document.getElementById('conditional').hidden = false; });
+    document.getElementById('replace').addEventListener('click', () => { const old = document.getElementById('full-name'); old.replaceWith(old.cloneNode(true)); });
+  </script>
+</body>
+</html>

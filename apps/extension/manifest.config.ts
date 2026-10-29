@@ -8,7 +8,7 @@ export default defineManifest(({ command }) => ({
   version: pkg.version,
   minimum_chrome_version: '116',
   background: {
-    service_worker: 'src/background.ts',
+    service_worker: 'src/background/service-worker.ts',
     type: 'module',
   },
   icons: {
@@ -22,6 +22,8 @@ export default defineManifest(({ command }) => ({
   },
   permissions: [
     'sidePanel',
+    'activeTab',
+    'scripting',
   ],
   // CRXJS loads its dev worker/modules from Vite. These permissions and CSP
   // exceptions are excluded entirely from the production build.
