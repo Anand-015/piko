@@ -10,6 +10,13 @@ export function watchMutations(labelNodes: Set<Element>, invalidate: () => void,
     return false
   }
   function relevant(record: MutationRecord): boolean {
+    // Frameworks mirror current text answers into defaultValue/value attributes
+    // (or textarea text). These are answers, not scan identity or labels. Keep
+    // option/radio values watched; live preflight still checks current answers
+    // and native constraints immediately before every write.
+    if (record.type === 'attributes' && record.attributeName === 'value' && record.target instanceof HTMLInputElement && !['radio', 'checkbox'].includes(record.target.type)) return false
+    const answerText = record.target instanceof Element ? record.target : record.target.parentElement
+    if (answerText?.closest('textarea') && (record.type === 'characterData' || record.type === 'childList' && [...record.addedNodes, ...record.removedNodes].every((node) => node.nodeType === Node.TEXT_NODE))) return false
     if (touchesLabel(record.target)) return true
     if (record.type === 'characterData') return Boolean(record.target.parentElement?.closest('label,legend,option'))
     const target = record.target instanceof Element ? record.target : record.target.parentElement
@@ -18,7 +25,18 @@ export function watchMutations(labelNodes: Set<Element>, invalidate: () => void,
     return [...record.addedNodes, ...record.removedNodes].some((node) => node instanceof Element && (node.matches(relevantSelector) || node.querySelector(relevantSelector)))
   }
   function process(records: MutationRecord[]) {
-    if (!stale && records.some(relevant)) {
+    // React temporarily clears/restores input names while updating controlled
+    // state. Compare each attribute's first old value with its final value in
+    // this synchronous batch, so a restored identity is not spuriously stale.
+    const seen = new Map<Node, Set<string>>()
+    const effective = records.filter((record) => {
+      if (record.type !== 'attributes' || !record.attributeName || !(record.target instanceof Element)) return true
+      const attributes = seen.get(record.target) ?? new Set<string>()
+      if (attributes.has(record.attributeName)) return false
+      attributes.add(record.attributeName); seen.set(record.target, attributes)
+      return record.target.getAttribute(record.attributeName) !== record.oldValue
+    })
+    if (!stale && effective.some(relevant)) {
       stale = true
       invalidate()
       observer.disconnect()
@@ -26,7 +44,7 @@ export function watchMutations(labelNodes: Set<Element>, invalidate: () => void,
     }
   }
   const observer = new MutationObserver(process)
-  observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: watchedAttributes })
+  observer.observe(document.documentElement, { subtree: true, childList: true, characterData: true, attributes: true, attributeOldValue: true, attributeFilter: watchedAttributes })
   return {
     current() { process(observer.takeRecords()); return !stale },
     dispose() { observer.disconnect(); clearTimeout(timer) },

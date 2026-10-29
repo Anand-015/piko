@@ -9,8 +9,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     {children}
     <footer className="mt-auto space-y-3 pt-2">
       <Separator />
-      <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><LockKeyhole aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />Session data stays in this panel’s memory. Resetting or reloading clears it.</p>
-      <p className="text-[11px] text-muted-foreground">Step 5 · Read-only scanner + synthetic demo · No webpage changes</p>
+      <p className="flex items-start gap-2 text-xs leading-5 text-muted-foreground"><LockKeyhole aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />Drafts and approvals stay in temporary extension memory. Approved values are shared with the destination page.</p>
+      <p className="text-[11px] text-muted-foreground">Step 6 · Inspect, review, approve, and verify</p>
     </footer>
   </main>
 }

@@ -1,10 +1,11 @@
 
-# Piko — Step 5 deterministic form scanner
+# Piko — Step 6 permission-gated form filling
 
-A local-first Chrome extension with an explicitly activated, read-only form
-scanner and a separate synthetic conversation/review demo. The independent
+A local-first Chrome extension with an explicitly activated form scanner,
+manual proposal review, one-use approval, verified form filling, and a separate
+synthetic conversation/review demo. The independent
 Python companion service exposes
-`GET http://127.0.0.1:8765/v1/health`. AI inference, audio, filling, pairing,
+`GET http://127.0.0.1:8765/v1/health`. AI inference, audio, pairing,
 and extension-to-service communication are deferred.
 
 ## Repository layout
@@ -12,7 +13,7 @@ and extension-to-service communication are deferred.
 ```text
 apps/extension/       React + TypeScript + CRXJS/Vite + shadcn/ui, Manifest V3
 apps/local-service/   FastAPI + Pydantic + Uvicorn; separate Python environment
-contracts/           Preserved Step 2 JSON Schemas; shared contract source
+contracts/           Shared schemas, including the Step 6 runtime approval grant
 docs/                Product specification, threat model, acceptance tests, setup
 test/                Preserved Step 2 contract harness and synthetic fixtures
 tests/               Contract, reducer, extension-browser, and service checks
@@ -48,6 +49,13 @@ For the live read-only scanner, open an HTTP/HTTPS page, click Piko’s toolbar
 icon on that tab, then choose **Inspect this page** in the side panel. It returns
 field metadata without collecting existing answers or modifying the page.
 Try the synthetic local fixture first; see the [scanner guide](docs/06-form-scanner.md).
+
+After inspection, use **Prepare manual answers** to include fields and enter
+synthetic values. Choose **Review selected values**, resolve validation and
+overwrite conflicts, then explicitly approve the exact batch. The extension
+fills only that batch and reports per-field outcomes. See the
+[Step 6 filling guide](docs/07-permission-gated-filling.md) for setup, guarantees,
+limitations, and the test commands.
 
 The scanner and UI demo run without the Python service. See the
 [Step 4 UI guide](docs/05-extension-ui.md) for state transitions and verification.

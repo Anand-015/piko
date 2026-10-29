@@ -41,6 +41,9 @@ npm run build
 - `src/components/assistant/` - Runtime status, conversation, and disabled microphone
 - `src/components/review/` - Editable proposals and simulated approval summary
 - `src/background/service-worker.ts` - Toolbar behavior, active-tab checks, injection, and lifecycle coordination
+- `src/background/approval-coordinator.ts` - Exact reviewed batches, expiry, sender validation, and one-use grants
+- `src/features/filling/` - Manual proposals, runtime validation, review, approval, and per-field results
+- `src/content/fill-engine.ts` - Live preflight, native setters/events, and delayed verification
 - `src/components/ui/` - shadcn/ui primitives (nine components)
 - `manifest.config.ts` - Chrome extension manifest configuration
 
@@ -54,8 +57,9 @@ npm run build
 
 - Use `manifest.config.ts` to configure your extension
 - The CRXJS plugin automatically handles manifest generation
-- Step 5 adds explicit read-only inspection to the separate synthetic demo.
-  No microphone capture, persistence, service integration, or form filling is added.
+- Step 6 adds manual permission-gated filling to explicit inspection. The
+  synthetic demo remains separate. See [the filling guide](../../docs/07-permission-gated-filling.md).
+- No microphone capture, persistence, AI, or service integration is added.
 - Production permissions are `sidePanel`, `activeTab`, and `scripting`; no
   persistent host permissions or automatic content-script registrations.
 - Run `npm run typecheck` and `npm run lint` before building.

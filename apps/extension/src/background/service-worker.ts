@@ -3,21 +3,20 @@ import { isContentStale, isInspectRequest, isRecord, isStopRequest, makeId } fro
 import { isScanInventory } from '../features/scanner/scanner.validation'
 import type { InspectRequest, InspectResponse } from '../features/scanner/scanner.messages'
 import type { InvalidationReason, ScanError, ScanInventory } from '../features/scanner/scanner.types'
+import { ApprovalCoordinator, fromPanel, type FillSession } from './approval-coordinator'
+import { isFillPanelRequest } from '../features/filling/fill.validation'
 
 void chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => console.error('PIKO_SIDE_PANEL_CONFIGURATION_FAILED'))
-interface Session { scanId: string; documentId: string; chromeDocumentId: string }
+type Session = FillSession
 const sessions = new Map<number, Session>()
+const approvals = new ApprovalCoordinator(sessions)
 const pending = new Map<number, string>()
 
-function fromPanel(sender: chrome.runtime.MessageSender): boolean {
-  if (sender.id !== chrome.runtime.id || !sender.url) return false
-  const url = new URL(sender.url)
-  return url.protocol === 'chrome-extension:' && url.host === chrome.runtime.id && url.pathname === '/src/sidepanel/index.html'
-}
 function release(tabId: number, session: Session) {
   void chrome.tabs.sendMessage(tabId, { type: 'PIKO_SCAN_RELEASE', scanId: session.scanId }, { documentId: session.chromeDocumentId }).catch(() => {})
 }
 function invalidate(tabId: number, reason: InvalidationReason, releaseReferences = true) {
+  approvals.invalidate(tabId)
   pending.delete(tabId)
   const session = sessions.get(tabId)
   if (!session) {
@@ -66,7 +65,7 @@ async function inspect(request: InspectRequest): Promise<InspectResponse> {
     if (pending.get(tabId) !== token) fail('stale-scan')
     if (!isScanInventory(inventory) || inventory.origin !== url.origin) fail('invalid-result')
     const current = inventory as ScanInventory
-    const session = { scanId: current.scanId, documentId: current.documentId, chromeDocumentId }
+    const session = { scanId: current.scanId, documentId: current.documentId, chromeDocumentId, inventory: current }
     createdSession = session
     sessions.set(tabId, session)
     const freshness: unknown = await chrome.tabs.sendMessage(tabId, { type: 'PIKO_SCAN_CURRENT', scanId: current.scanId, documentId: current.documentId }, { documentId: chromeDocumentId })
@@ -85,11 +84,16 @@ async function inspect(request: InspectRequest): Promise<InspectResponse> {
   }
 }
 chrome.runtime.onMessage.addListener((message: unknown, sender, respond) => {
+  if (isFillPanelRequest(message) && fromPanel(sender)) {
+    void approvals.handle(message).then(respond)
+    return true
+  }
   if (isInspectRequest(message) && fromPanel(sender)) {
     void inspect(message).then(respond)
     return true
   }
   if (isStopRequest(message) && fromPanel(sender)) {
+    approvals.invalidate(message.tabId)
     const session = sessions.get(message.tabId)
     if (session?.scanId === message.scanId) { sessions.delete(message.tabId); release(message.tabId, session) }
     else if (!session) void chrome.tabs.sendMessage(message.tabId, { type: 'PIKO_SCAN_RELEASE', scanId: message.scanId }, { frameId: 0 }).catch(() => {})
